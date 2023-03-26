@@ -2,16 +2,16 @@ package fr.usmb.dht;
 
 public enum MessageType {
 	
-	HELLOWORLD(0), JOIN(1), LEAVE(2);
+	HELLOWORLD("HelloWorld"), JOIN("Join"), LEAVE("Leave"), PLACE_RIGHT("Place à droite"), PLACE_LEFT("Place à gauche"), PLACE_BOTH("Place des deux côtés");
 	
-	private int id;
+	private String description;
 	
-	MessageType(int id){
-		this.id = id;
+	MessageType(String description){
+		this.description = description;
 	}
 	
-	public Integer getId() {
-		return this.id;
+	public String getDescription() {
+		return this.description;
 	}
 
 }
