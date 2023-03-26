@@ -2,12 +2,10 @@ package fr.usmb.dht;
 
 public class Message {
 
-    public final static int HELLOWORLD = 0;
-
-    private int type;
+    public MessageType type;
     private String content;
 
-    Message(int type, String content) {
+    Message(MessageType type, String content) {
     	this.type = type;
 		this.content = content;
     }
@@ -16,8 +14,5 @@ public class Message {
     	return this.content;
     }
 
-    public int getType() {
-    	return this.type;
-    }
     
 }

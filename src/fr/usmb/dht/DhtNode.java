@@ -22,6 +22,7 @@ public class DhtNode implements EDProtocol {
     private String prefix;
 
     public DhtNode(String prefix) {
+    	
 		this.prefix = prefix;
 		// initialisation des identifiants a partir du fichier de configuration
 		this.transportPid = Configuration.getPid(prefix + ".transport");

@@ -31,7 +31,7 @@ public class Initializer implements peersim.core.Control {
 		Node destination;
 		
 		// creation du message
-		Message helloMsg = new Message(Message.HELLOWORLD,"Hello!!");
+		Message helloMsg = new Message(MessageType.HELLOWORLD, "Hello!!");
 		
 		
 		if (nodeNb < 1) {
