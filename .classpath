@@ -6,9 +6,9 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="C:/Users/thoma/eclipse-workspace/INFO833/djep-1.0.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/thoma/eclipse-workspace/INFO833/jep-2.3.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/thoma/eclipse-workspace/INFO833/peersim-1.0.5.jar"/>
-	<classpathentry kind="lib" path="C:/Users/thoma/eclipse-workspace/INFO833/peersim-doclet.jar"/>
+	<classpathentry kind="lib" path="C:/Users/benji/Documents/GitHub/INFO833_Projet/djep-1.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/benji/Documents/GitHub/INFO833_Projet/jep-2.3.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/benji/Documents/GitHub/INFO833_Projet/peersim-1.0.5.jar"/>
+	<classpathentry kind="lib" path="C:/Users/benji/Documents/GitHub/INFO833_Projet/peersim-doclet.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
