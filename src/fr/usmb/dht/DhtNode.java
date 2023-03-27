@@ -87,60 +87,60 @@ public class DhtNode implements EDProtocol {
     	switch (msg.type) {
 		case JOIN: { 
 			
-			if(sender.equals(msg.getNodeToPlace())) {
+			if(sender.equals(msg.getTarget())) {
 				System.out.println("[" + msg.getType().getDescription() + "] from " + msg.getLastSender().getUid() + " -> I join the network");
 			}
 			
 			if(this.leftNeighbor == this && this.rightNeighbor == this) {
 				
 				Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this, this});
-				this.send(changeBothMsg, Network.get(msg.getNodeToPlace().getId()));
+				this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
 				
-				this.rightNeighbor = msg.getNodeToPlace();
-				this.leftNeighbor = msg.getNodeToPlace();
+				this.rightNeighbor = msg.getTarget();
+				this.leftNeighbor = msg.getTarget();
 				System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid() + " | Change Right Node to " + this.rightNeighbor.getUid());
 				
 				
 				break;
 			}
 			
-			if(msg.getNodeToPlace().getUid() > this.uid) {
+			if(msg.getTarget().getUid() > this.uid) {
 				
-				if(msg.getNodeToPlace().getUid() < this.rightNeighbor.getUid() || (this.uid > this.rightNeighbor.getUid())) {
+				if(msg.getTarget().getUid() < this.rightNeighbor.getUid() || (this.uid > this.rightNeighbor.getUid())) {
 					
 					Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this, this.rightNeighbor});
-					this.send(changeBothMsg, Network.get(msg.getNodeToPlace().getId()));
+					this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
 					
-					Message changeLeftMsg = new Message(MessageType.PLACE_LEFT, "Change your left neighbor !", msg.getNodeToPlace());
+					Message changeLeftMsg = new Message(MessageType.PLACE_LEFT, "Change your left neighbor !", msg.getTarget());
 					
 					this.send(changeLeftMsg, Network.get(this.rightNeighbor.getId()));
 
-					this.rightNeighbor = msg.getNodeToPlace();
+					this.rightNeighbor = msg.getTarget();
 					System.out.println(prefixMsg + "Change Right Node to " + this.rightNeighbor.getUid());
 					
 				} else {
 					
 					this.send(msg, Network.get(this.rightNeighbor.getId()));
 					
-					if(sender.equals(msg.getNodeToPlace())) {
+					if(sender.equals(msg.getTarget())) {
 						System.out.println(prefixMsg + "Try to place me");
 					} else {
-						System.out.println(prefixMsg + "Try to place " + msg.getNodeToPlace().getUid());
+						System.out.println(prefixMsg + "Try to place " + msg.getTarget().getUid());
 					}
 				}
 				
 			} else {
 
-				if(msg.getNodeToPlace().getUid() > this.leftNeighbor.getUid()  || (this.uid < this.leftNeighbor.getUid())) {
+				if(msg.getTarget().getUid() > this.leftNeighbor.getUid()  || (this.uid < this.leftNeighbor.getUid())) {
 					
 					
 					Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this.leftNeighbor, this});
-					this.send(changeBothMsg, Network.get(msg.getNodeToPlace().getId()));
+					this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
 					
-					Message changeRightMsg = new Message(MessageType.PLACE_RIGHT, "Change your right neighbor !", msg.getNodeToPlace());
+					Message changeRightMsg = new Message(MessageType.PLACE_RIGHT, "Change your right neighbor !", msg.getTarget());
 					
 					this.send(changeRightMsg, Network.get(this.leftNeighbor.getId()));
-					this.leftNeighbor = msg.getNodeToPlace();
+					this.leftNeighbor = msg.getTarget();
 					System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid());
 					
 					
@@ -148,10 +148,10 @@ public class DhtNode implements EDProtocol {
 					
 					this.send(msg, Network.get(this.leftNeighbor.getId()));
 					
-					if(sender.equals(msg.getNodeToPlace())) {
+					if(sender.equals(msg.getTarget())) {
 						System.out.println(prefixMsg + "Try to place me");
 					} else {
-						System.out.println(prefixMsg + "Try to place " + msg.getNodeToPlace().getUid());
+						System.out.println(prefixMsg + "Try to place " + msg.getTarget().getUid());
 					}
 					
 				}
@@ -183,7 +183,7 @@ public class DhtNode implements EDProtocol {
 		}
 		case PLACE_LEFT: {
 			
-			this.leftNeighbor = msg.getNodeToPlace();
+			this.leftNeighbor = msg.getTarget();
 			
 			System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid());
 			
@@ -191,10 +191,31 @@ public class DhtNode implements EDProtocol {
 		}
 		case PLACE_RIGHT: {
 			
-			this.rightNeighbor = msg.getNodeToPlace();
+			this.rightNeighbor = msg.getTarget();
 			
 			System.out.println(prefixMsg + "Change Right Node to " + this.rightNeighbor.getUid());
 			
+			
+			break;
+		}
+		case DELIVER: {
+			
+			DhtNode dest = msg.getTarget();
+			
+			// ICI FAIRE CONDITION POUR CONNAITRE LA DISTANCE ENTRE LE DEBUT ET FIN POUR OPTI LES LIAISONS EN PRENANT LA MOITIE SI SUPERIEUR A 8
+			
+			if(dest.equals(this)) {
+				
+				System.out.println(prefixMsg + "Message's content : " + msg.getContent());
+				
+				// ICI A AJOUTER CALL MODIF TABLE DE ROUTAGE 
+				
+			} else {
+				
+				this.send(msg, Network.get(this.rightNeighbor.getId()));
+				System.out.println(prefixMsg + "Delivering message to " + this.rightNeighbor.getUid());
+				
+			}
 			
 			break;
 		}

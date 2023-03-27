@@ -8,7 +8,7 @@ public class Message {
     public MessageType type;
     private String content;
     
-    private DhtNode nodeToPlace;
+    private DhtNode target;
 
     private DhtNode[] neighbors;
     
@@ -26,7 +26,7 @@ public class Message {
     Message(MessageType type, String content, DhtNode nodeToPlace) {
     	this.type = type;
 		this.content = content;
-		this.nodeToPlace = nodeToPlace;
+		this.target = nodeToPlace;
     }
     
     Message(MessageType type, String content, Message data) {
@@ -77,8 +77,8 @@ public class Message {
     	return this.content;
     }
     
-    public DhtNode getNodeToPlace() {
-    	return this.nodeToPlace;
+    public DhtNode getTarget() {
+    	return this.target;
     }
     
     public DhtNode[] getNeighbors() {

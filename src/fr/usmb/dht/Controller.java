@@ -56,6 +56,11 @@ public class Controller implements peersim.core.Control{
 		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), treeMsg, Network.get(0)));
 		
 		DhtNode node2 = (DhtNode) Network.get(2).getProtocol(this.dhtPid);
+		
+		Message deliverMsg = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		this.steps.add(() -> sendMsg(node2, deliverMsg, Network.get(2)));
+		
+		
 		this.steps.add(() -> node2.showInfos());
 		
 	}
