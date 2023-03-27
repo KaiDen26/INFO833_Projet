@@ -51,33 +51,26 @@ public class Initializer implements peersim.core.Control {
 		}
 		node0.setNodeUid(node0Uid);*/
 		
-		node0.setNodeUid(500);
+		node0.setNodeUid(1);
 		
 		
 		/*DhtNode node1 = (DhtNode)Network.get(1).getProtocol(this.dhtPid);
 		node1.setTransportLayer(1);
-		node1.setNodeUid(8);
-			
+		node1.setNodeUid(8);	
 		Message joinMsg = new Message(MessageType.JOIN, "I'm joining the network !", node1);
 		node1.send(joinMsg, Network.get(0));
 		
 		DhtNode node2 = (DhtNode)Network.get(2).getProtocol(this.dhtPid);
 		node2.setTransportLayer(2);
 		node2.setNodeUid(7);
-			
 		Message joinMsg2 = new Message(MessageType.JOIN, "I'm joining the network !", node2);
-		
-		
-		node2.send(joinMsg2, Network.get(1));
-		
-		
-		
+		node2.send(joinMsg2, Network.get(0));
+				
 		DhtNode node3 = (DhtNode)Network.get(3).getProtocol(this.dhtPid);
 		node3.setTransportLayer(3);
 		node3.setNodeUid(10);
-			
 		Message joinMsg3 = new Message(MessageType.JOIN, "I'm joining the network !", node3);
-		node3.send(joinMsg3, Network.get(1));  */
+		node3.send(joinMsg3, Network.get(0));  */
 		
 		//System.out.println(getTree("Arbre : \n", node0, node0)); 
 		
@@ -100,26 +93,26 @@ public class Initializer implements peersim.core.Control {
 		    
 		    DhtNode nextNode;
 		    
-		    nextNode = ((DhtNode) Network.get(randomNodeId).getProtocol(this.dhtPid));
+		    System.out.println(randomNodeId);
 		    
+		    nextNode = ((DhtNode) Network.get(randomNodeId).getProtocol(this.dhtPid));
 			while (randomNodeId == i || nextNode.getRightNeighor() == null || nextNode.getLeftNeighor() == null) {
 				randomNodeId = new Random().nextInt(nodeNb);
 				nextNode = ((DhtNode) Network.get(randomNodeId).getProtocol(this.dhtPid));
 			}
 			
-			current = (DhtNode) Network.get(i).getProtocol(this.dhtPid);
-			
 			Message joinMsg = new Message(MessageType.JOIN, "I'm joining the network !", current);
 			//current.send(joinMsg, Network.get(randomNodeId));
 			j += 100;
-			EDSimulator.add((j), joinMsg, Network.get(randomNodeId), 0);
+			EDSimulator.add((j), joinMsg, Network.get(0), 0);
+			System.out.println(randomNodeId);
 			
 		} 
 		
 		
 		//System.out.println(getTree("Arbre : \n", node0, node0));
 		Message treeMsg = new Message(MessageType.SHOW_TREE, "");
-		EDSimulator.add((2500), treeMsg, Network.get(0), 0);
+		EDSimulator.add((2999), treeMsg, Network.get(0), 0);
 		
 		System.out.println("Initialization completed");
 		return false;
