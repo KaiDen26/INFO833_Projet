@@ -2,7 +2,7 @@ package fr.usmb.dht;
 
 public enum MessageType {
 	
-	HELLOWORLD("HelloWorld"), JOIN("Join"), LEAVE("Leave"), PLACE_RIGHT("Place à droite"), PLACE_LEFT("Place à gauche"), PLACE_BOTH("Place des deux côtés");
+	HELLOWORLD("HelloWorld"), JOIN("Join"), LEAVE("Leave"), PLACE_RIGHT("Place à droite"), PLACE_LEFT("Place à gauche"), PLACE_BOTH("Place des deux côtés"), SHOW_TREE("dg");
 	
 	private String description;
 	
