@@ -4,7 +4,10 @@ import peersim.edsim.*;
 import peersim.core.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import peersim.config.*;
 
@@ -30,6 +33,8 @@ public class DhtNode implements EDProtocol {
     
     private DhtNode rightNeighbor;
     private DhtNode leftNeighbor;
+    
+    private HashMap<DhtNode, Map<Integer, Message>> dataInfos = new HashMap<>();
 
     public DhtNode(String prefix) {
     	
@@ -75,6 +80,8 @@ public class DhtNode implements EDProtocol {
     // affichage a la reception
     private void receive(Message msg) {
     	
+    	DhtNode sender = msg.getLastSender();
+    	
     	String prefixMsg = "[" + msg.getType().getDescription() + "] from " + msg.getLastSender().getUid() + " to " + this.uid + " -> ";
     	
     	switch (msg.type) {
@@ -83,8 +90,6 @@ public class DhtNode implements EDProtocol {
 			break;
 		}
 		case JOIN: { 
-			
-			DhtNode sender = msg.getLastSender();
 			
 			if(sender.equals(msg.getNodeToPlace())) {
 				System.out.println("[" + msg.getType().getDescription() + "] from " + msg.getLastSender().getUid() + " -> I join the network");
@@ -197,17 +202,84 @@ public class DhtNode implements EDProtocol {
 			
 			break;
 		}
+		case ADD_DATA: {
+			
+			if(msg.getRemaining() > 0) {
+				
+				msg.decreaseRemaining();
+				
+				if(!msg.getSenders().contains(this.leftNeighbor) && !msg.getSenders().contains(this.rightNeighbor)) {
+					this.send(msg, Network.get(this.rightNeighbor.getId()));
+					this.send(msg, Network.get(this.leftNeighbor.getId()));
+				}
+				else if(msg.getSenders().contains(this.leftNeighbor)) {
+					
+					// Passer le message à droite
+					this.send(msg, Network.get(this.rightNeighbor.getId()));
+					
+				} else {
+					
+					// Passer le message à gauche
+					this.send(msg, Network.get(this.leftNeighbor.getId()));
+					
+				}
+				
+				
+			}
+			
+			if(this.dataInfos.keySet().contains(sender)) {
+	    		Map<Integer, Message> currentInfos = this.dataInfos.get(sender);
+	    		currentInfos.put(Controller.generateNewDataId(), msg.data2Save());
+	    		this.dataInfos.put(sender, currentInfos);
+	    		
+	    	} else {
+	    		Map<Integer, Message> newInfos = new HashMap<>();
+	    		newInfos.put(Controller.generateNewDataId(), msg.data2Save());
+	    		this.dataInfos.put(sender, newInfos);
+	    	}
+			
+			break;
+			
+		}
 		case SHOW_TREE: {
 			
-			System.out.println(getTree("Arbre :\n", this, this));
+			System.out.println(getTree("Tree :\n", this, this));
 			break;
 			
 		}
 		
-		
 		default:
 			throw new IllegalArgumentException("Unexpected value");
 		}
+    	
+    	if(!msg.isType(MessageType.ADD_DATA)) {
+    		Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
+    		addData.setRemaining(3);
+        	this.send(addData, getMyNode());
+    	}
+    	
+    	
+    	
+    }
+    
+    public void showInfos() {
+    	
+    	System.err.println("\n\n >>>>> Data Informations for " + this + " <<<<<");
+    	
+    	for(DhtNode currentNode : this.dataInfos.keySet()) {
+    		
+    		System.out.println("-------- " + currentNode + " --------");
+    		
+    		Collection<Message> data = this.dataInfos.get(currentNode).values();
+    		
+    		for(Message messages : data) {
+    			
+    			System.out.println("- " + messages + " (" + messages.getContent() + ")");
+    			
+    		}
+    		
+    		
+    	}
     	
     }
     
@@ -226,7 +298,6 @@ public class DhtNode implements EDProtocol {
 		}
 		
 		return message;
-    	
     	
     }
 

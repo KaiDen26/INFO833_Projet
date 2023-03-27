@@ -12,6 +12,8 @@ public class Controller implements peersim.core.Control{
 	
 	 private int executedStep = 0;
 	 private final List<Runnable> steps = new ArrayList<>();
+	 
+	 private static int dataId = 0;
 
 	 public Controller(String prefix) {
 	    	
@@ -30,9 +32,6 @@ public class Controller implements peersim.core.Control{
 		    
 		    while (randomNodeId == i) {
 				randomNodeId = new Random().nextInt(i);
-				
-				DhtNode nextNode = ((DhtNode) Network.get(randomNodeId).getProtocol(this.dhtPid));
-				System.out.println(i + " " + randomNodeId);
 			}
 		    
 		    int destId = randomNodeId;
@@ -56,7 +55,9 @@ public class Controller implements peersim.core.Control{
 		
 		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), treeMsg, Network.get(0)));
 		
-		 
+		DhtNode node2 = (DhtNode) Network.get(2).getProtocol(this.dhtPid);
+		this.steps.add(() -> node2.showInfos());
+		
 	}
 	 
 	public void sendMsg(DhtNode node, Message msg, Node dest) {
@@ -74,4 +75,8 @@ public class Controller implements peersim.core.Control{
 		return false;
 	}
 
+	public static Integer generateNewDataId() {
+		dataId++;
+		return dataId;
+	}
 }

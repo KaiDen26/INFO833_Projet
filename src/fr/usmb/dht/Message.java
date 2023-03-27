@@ -14,6 +14,10 @@ public class Message {
     
     private ArrayList<DhtNode> senders = new ArrayList<>();
     
+    private int remaining = 0;
+    
+    private Message data;
+    
     Message(MessageType type, String content) {
     	this.type = type;
 		this.content = content;
@@ -25,10 +29,24 @@ public class Message {
 		this.nodeToPlace = nodeToPlace;
     }
     
+    Message(MessageType type, String content, Message data) {
+    	this.type = type;
+		this.content = content;
+		this.data = data;
+    }
+    
     Message(MessageType type, String content, DhtNode[] neighbors) {
     	this.type = type;
 		this.content = content;
 		this.neighbors = neighbors;
+    }
+    
+    public Message data2Save() {
+    	return this.data;
+    }
+    
+    public boolean isType(MessageType type) {
+    	return this.type == type;
     }
     
     public void addSender(DhtNode node) {
@@ -41,6 +59,18 @@ public class Message {
     
     public DhtNode getLastSender() {
     	return this.senders.get(senders.size() - 1);
+    }
+    
+    public void setRemaining(int remaining) {
+    	this.remaining = remaining;
+    }
+    
+    public Integer getRemaining() {
+    	return this.remaining;
+    }
+    
+    public void decreaseRemaining() {
+    	this.remaining--;
     }
 
     public String getContent() {
@@ -57,6 +87,10 @@ public class Message {
     
     public MessageType getType() {
     	return this.type;
+    }
+    
+    public String toString() {
+    	return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1);
     }
 
     
