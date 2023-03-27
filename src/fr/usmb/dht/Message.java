@@ -90,7 +90,13 @@ public class Message {
     }
     
     public String toString() {
-    	return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1);
+    	
+    	if(!this.senders.get(senders.size() - 1).equals(this.senders.get(0))) {
+    		return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1) + " about " + this.senders.get(senders.size() - 1).getUid();
+    	} else {
+    		return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1);
+    	}
+    	
     }
 
     

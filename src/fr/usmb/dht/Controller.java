@@ -36,7 +36,7 @@ public class Controller implements peersim.core.Control{
 		    
 		    int destId = randomNodeId;
 			
-			Message joinMsg = new Message(MessageType.JOIN, "I'm joining the network !", current);
+			Message joinMsg = new Message(MessageType.JOIN, "Joining the network !", current);
 			this.steps.add(() -> sendMsg(current, joinMsg, Network.get(destId)));
 			
 		} 
@@ -50,7 +50,7 @@ public class Controller implements peersim.core.Control{
 		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), treeMsg, Network.get(0)));
 		
 		
-		Message joinMsg = new Message(MessageType.JOIN, "I'm joining the network !", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		Message joinMsg = new Message(MessageType.JOIN, "Joining the network !", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
 		this.steps.add(() -> sendMsg((DhtNode) Network.get(3).getProtocol(this.dhtPid), joinMsg, Network.get(0)));
 		
 		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), treeMsg, Network.get(0)));
