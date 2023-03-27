@@ -91,6 +91,8 @@ public class DhtNode implements EDProtocol {
 				
 				this.rightNeighbor = msg.getNodeToPlace();
 				this.leftNeighbor = msg.getNodeToPlace();
+				System.out.println("[" + this.uid + "] Change Left Node to " + this.leftNeighbor.getUid() + " | Change Right Node to " + this.rightNeighbor.getUid());
+				
 				
 				break;
 			}
@@ -107,6 +109,7 @@ public class DhtNode implements EDProtocol {
 					this.send(changeLeftMsg, Network.get(this.rightNeighbor.getId()));
 
 					this.rightNeighbor = msg.getNodeToPlace();
+					System.out.println("[" + this.uid + "] Change Right Node to " + this.rightNeighbor.getUid());
 					
 				} else {
 					
@@ -125,6 +128,7 @@ public class DhtNode implements EDProtocol {
 					
 					this.send(changeRightMsg, Network.get(this.leftNeighbor.getId()));
 					this.leftNeighbor = msg.getNodeToPlace();
+					System.out.println("[" + this.uid + "] Change Left Node to " + this.leftNeighbor.getUid());
 					
 					
 				} else {
