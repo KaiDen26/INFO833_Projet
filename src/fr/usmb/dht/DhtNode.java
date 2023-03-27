@@ -77,7 +77,7 @@ public class DhtNode implements EDProtocol {
     	this.transport.send(getMyNode(), dest, msg, this.mypid);
     }
 
-    // affichage a la reception
+    // affichage lors de la reception
     private void receive(Message msg) {
     	
     	DhtNode sender = msg.getLastSender();
@@ -85,10 +85,6 @@ public class DhtNode implements EDProtocol {
     	String prefixMsg = "[" + msg.getType().getDescription() + "] from " + msg.getLastSender().getUid() + " to " + this.uid + " -> ";
     	
     	switch (msg.type) {
-		case HELLOWORLD: {
-			//System.out.println(this + ": Received " + msg.getContent());
-			break;
-		}
 		case JOIN: { 
 			
 			if(sender.equals(msg.getNodeToPlace())) {
@@ -214,12 +210,10 @@ public class DhtNode implements EDProtocol {
 				}
 				else if(msg.getSenders().contains(this.leftNeighbor)) {
 					
-					// Passer le message à droite
 					this.send(msg, Network.get(this.rightNeighbor.getId()));
 					
 				} else {
 					
-					// Passer le message à gauche
 					this.send(msg, Network.get(this.leftNeighbor.getId()));
 					
 				}
@@ -257,8 +251,6 @@ public class DhtNode implements EDProtocol {
     		addData.setRemaining(3);
         	this.send(addData, getMyNode());
     	}
-    	
-    	
     	
     }
     
