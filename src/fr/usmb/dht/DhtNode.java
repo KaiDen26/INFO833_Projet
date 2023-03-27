@@ -82,11 +82,7 @@ public class DhtNode implements EDProtocol {
 			//System.out.println(this + ": Received " + msg.getContent());
 			break;
 		}
-		case JOIN: {
-			
-			//System.out.println("je suis le noeud " + this.id);
-			//System.out.println("[" + msg.getType().getDescription() + "] provenant de " + msg.getNodeToPlace().getUid() + " sur " + this.uid);
-			
+		case JOIN: { 
 			
 			if(this.leftNeighbor == this && this.rightNeighbor == this) {
 				
@@ -107,7 +103,7 @@ public class DhtNode implements EDProtocol {
 					return;
 				}
 				
-				if(msg.getNodeToPlace().getUid() < this.rightNeighbor.getUid() || this.uid > this.rightNeighbor.getUid()) {
+				if(msg.getNodeToPlace().getUid() < this.rightNeighbor.getUid() || (this.uid > this.rightNeighbor.getUid())) {
 					
 					Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this, this.rightNeighbor});
 					this.send(changeBothMsg, Network.get(msg.getNodeToPlace().getId()));
@@ -115,7 +111,7 @@ public class DhtNode implements EDProtocol {
 					Message changeLeftMsg = new Message(MessageType.PLACE_LEFT, "Change your left neighbor !", msg.getNodeToPlace());
 					
 					this.send(changeLeftMsg, Network.get(this.rightNeighbor.getId()));
-					//Message changeRightMsg = new Message(MessageType.PLACE_RIGHT, "Change your right neighbor !", msg.getNodeToPlace());
+
 					this.rightNeighbor = msg.getNodeToPlace();
 					
 					
@@ -132,7 +128,7 @@ public class DhtNode implements EDProtocol {
 					return;
 				}
 				
-				if(msg.getNodeToPlace().getUid() > this.leftNeighbor.getUid()  || this.uid < this.leftNeighbor.getUid()) {
+				if(msg.getNodeToPlace().getUid() > this.leftNeighbor.getUid()  || (this.uid < this.leftNeighbor.getUid())) {
 					
 					
 					Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this.leftNeighbor, this});
@@ -162,7 +158,7 @@ public class DhtNode implements EDProtocol {
 			this.leftNeighbor = msg.getNeighbors()[0];
 			this.rightNeighbor = msg.getNeighbors()[1];
 			
-			//System.out.println(" both [" + this.uid + "] " + this.leftNeighbor.getUid() +"|" + this.rightNeighbor.getUid());
+			System.out.println("[" + this.uid + "] Change Left Node to " + this.leftNeighbor.getUid() +"| Change Right Node to " + this.rightNeighbor.getUid());
 			
 			break;
 		}
@@ -171,9 +167,9 @@ public class DhtNode implements EDProtocol {
 			this.leftNeighbor = msg.getNodeToPlace();
 			
 			if(this.rightNeighbor == null) {
-				//System.out.println(" gauche [" + this.uid + "] " + this.leftNeighbor.getUid() + "|?");
+				System.out.println("[" + this.uid + "] Change Left Node to " + this.leftNeighbor.getUid() + "| Right node is ?");
 			} else {
-				//System.out.println(" gauche [" + this.uid + "] " + this.leftNeighbor.getUid() + "|" + this.rightNeighbor.getUid());
+				System.out.println("[" + this.uid + "] Change Left Node to " + this.leftNeighbor.getUid() + "| Right node is " + this.rightNeighbor.getUid());
 			}
 			
 			
@@ -184,9 +180,9 @@ public class DhtNode implements EDProtocol {
 			this.rightNeighbor = msg.getNodeToPlace();
 			
 			if(this.leftNeighbor == null) {
-				//System.out.println(" droite [" + this.uid + "] 	?|" + this.rightNeighbor.getUid());
+				System.out.println("[" + this.uid + "] Left node is	?| Change Right Node to " + this.rightNeighbor.getUid());
 			} else {
-				//System.out.println(" droite [" + this.uid + "] " + this.leftNeighbor.getUid() + "|" + this.rightNeighbor.getUid());
+				System.out.println("[" + this.uid + "] Left node is " + this.leftNeighbor.getUid() + "| Change Right Node to " + this.rightNeighbor.getUid());
 			}
 			
 			

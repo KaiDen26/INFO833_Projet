@@ -36,6 +36,9 @@ public class Initializer implements peersim.core.Control {
 		DhtNode current;
 		Node destination;
 		
+		Random rand = new Random();
+		rand.setSeed(2023);
+		
 		if (nodeNb < 1) {
 		    System.err.println("Network size is not positive");
 		    System.exit(1);
@@ -45,13 +48,10 @@ public class Initializer implements peersim.core.Control {
 		DhtNode node0 = (DhtNode)Network.get(0).getProtocol(this.dhtPid);
 		node0.setNeighbors(node0, node0);
 		node0.setTransportLayer(0);
-		/*int node0Uid = new Random().nextInt(1000);
-		while (nodeUids.contains(node0Uid)) {
-			node0Uid = new Random().nextInt(1000);
-		}
-		node0.setNodeUid(node0Uid);*/
+		int node0Uid = new Random().nextInt(1000);
+		node0.setNodeUid(node0Uid);
 		
-		node0.setNodeUid(1);
+		//node0.setNodeUid(126);
 		
 		
 		/*DhtNode node1 = (DhtNode)Network.get(1).getProtocol(this.dhtPid);
@@ -80,39 +80,46 @@ public class Initializer implements peersim.core.Control {
 		for (int i = 1; i < nodeNb; i++) {
 			
 			//On fait en sorte que le uid soit unique
-			int nodeUid = new Random().nextInt(1000);
+			int nodeUid = rand.nextInt(1000);
 			while (nodeUids.contains(nodeUid)) {
-				nodeUid = new Random().nextInt(1000);
+				nodeUid = rand.nextInt(1000);
 			}
 			nodeUids.add(nodeUid);
 		    current = (DhtNode) Network.get(i).getProtocol(this.dhtPid);
 		    current.setTransportLayer(i);
 		    current.setNodeUid(nodeUid);
 		    
-		    int randomNodeId = new Random().nextInt(nodeNb);
+		    
+		    
+		    
+		    int randomNodeId = rand.nextInt(i);
 		    
 		    DhtNode nextNode;
-		    
-		    System.out.println(randomNodeId);
-		    
 		    nextNode = ((DhtNode) Network.get(randomNodeId).getProtocol(this.dhtPid));
-			while (randomNodeId == i || nextNode.getRightNeighor() == null || nextNode.getLeftNeighor() == null) {
-				randomNodeId = new Random().nextInt(nodeNb);
+		    System.out.println(i + " " + randomNodeId);
+		    
+		    while (randomNodeId == i) {
+				randomNodeId = rand.nextInt(i);
+				
 				nextNode = ((DhtNode) Network.get(randomNodeId).getProtocol(this.dhtPid));
+				System.out.println(i + " " + randomNodeId);
 			}
 			
+			
+			
+			
 			Message joinMsg = new Message(MessageType.JOIN, "I'm joining the network !", current);
-			//current.send(joinMsg, Network.get(randomNodeId));
-			j += 100;
-			EDSimulator.add((j), joinMsg, Network.get(0), 0);
-			System.out.println(randomNodeId);
+			current.send(joinMsg, Network.get(randomNodeId));
+			//j += 500;
+			//EDSimulator.add((j), joinMsg, Network.get(randomNodeId), 0);
+			
 			
 		} 
 		
 		
 		//System.out.println(getTree("Arbre : \n", node0, node0));
 		Message treeMsg = new Message(MessageType.SHOW_TREE, "");
-		EDSimulator.add((2999), treeMsg, Network.get(0), 0);
+		EDSimulator.add((19999), treeMsg, Network.get(0), 0);
 		
 		System.out.println("Initialization completed");
 		return false;
