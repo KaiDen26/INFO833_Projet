@@ -1,5 +1,8 @@
 package fr.usmb.dht;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Message {
 
     public MessageType type;
@@ -8,6 +11,8 @@ public class Message {
     private DhtNode nodeToPlace;
 
     private DhtNode[] neighbors;
+    
+    private ArrayList<DhtNode> senders = new ArrayList<>();
     
     Message(MessageType type, String content) {
     	this.type = type;
@@ -24,6 +29,18 @@ public class Message {
     	this.type = type;
 		this.content = content;
 		this.neighbors = neighbors;
+    }
+    
+    public void addSender(DhtNode node) {
+    	this.senders.add(node);
+    }
+    
+    public List<DhtNode> getSenders(){
+	   return this.senders;
+    }
+    
+    public DhtNode getLastSender() {
+    	return this.senders.get(senders.size() - 1);
     }
 
     public String getContent() {
