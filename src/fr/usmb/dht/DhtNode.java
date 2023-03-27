@@ -204,7 +204,7 @@ public class DhtNode implements EDProtocol {
 			
 			// ICI FAIRE CONDITION POUR CONNAITRE LA DISTANCE ENTRE LE DEBUT ET FIN POUR OPTI LES LIAISONS EN PRENANT LA MOITIE SI SUPERIEUR A 8
 			
-			if(this.equals(msg.getSenders().get(0)) && msg.getSenders().size() > 0) {
+			if(this.equals(msg.getSenders().get(0)) && msg.getSenders().size() > 1) {
 				
 				// ICI A AJOUTER CALL MODIF TABLE DE ROUTAGE 
 				System.out.println("[" + msg.getTarget().getUid() + "] -> Unknown Node ");
