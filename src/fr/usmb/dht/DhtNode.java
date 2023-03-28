@@ -288,11 +288,11 @@ public class DhtNode implements EDProtocol {
     		
     		System.out.println("-------- " + currentNode + " --------");
     		
-    		Collection<Message> data = this.dataInfos.get(currentNode).values();
-    		
-    		for(Message messages : data) {
+    		for(int id : this.dataInfos.get(currentNode).keySet()) {
     			
-    			System.out.println("- " + messages + " (" + messages.getContent() + ")");
+    			Message message = this.dataInfos.get(currentNode).get(id);
+    			
+    			System.out.println("{" + id + "} - " + message + " (" + message.getContent() + ")");
     			
     		}
     		
