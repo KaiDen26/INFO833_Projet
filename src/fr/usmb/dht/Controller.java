@@ -13,7 +13,7 @@ public class Controller implements peersim.core.Control{
 	 private int executedStep = 0;
 	 private final List<Runnable> steps = new ArrayList<>();
 	 
-	 private static int dataId = 0;
+	 private ArrayList<Integer> msgUids = new ArrayList<>();
 
 	 public Controller(String prefix) {
 	    	
@@ -58,9 +58,11 @@ public class Controller implements peersim.core.Control{
 		DhtNode node2 = (DhtNode) Network.get(2).getProtocol(this.dhtPid);
 		
 		Message deliverMsg = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		deliverMsg.setId(generateNewDataId());
 		this.steps.add(() -> sendMsg(node2, deliverMsg, Network.get(2)));
 		
 		Message deliverMsg2 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		deliverMsg2.setId(generateNewDataId());
 		this.steps.add(() -> sendMsg(node2, deliverMsg2, Network.get(2)));
 		
 		
@@ -74,10 +76,12 @@ public class Controller implements peersim.core.Control{
 		this.steps.add(() -> sendMsg(node3, joinMsg2, Network.get(8)));
 		
 		Message deliverMsg3 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		deliverMsg3.setId(generateNewDataId());
 		this.steps.add(() -> sendMsg(node2, deliverMsg3, Network.get(2)));
 		
 		
 		Message deliverMsg4 = new Message(MessageType.DELIVER, 8000.54, (DhtNode) Network.get(4).getProtocol(this.dhtPid));
+		deliverMsg4.setId(generateNewDataId());
 		this.steps.add(() -> sendMsg(node2, deliverMsg4, Network.get(2)));
 		
 		Message leaving2 = new Message(MessageType.LEAVE, "Leaving", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
@@ -104,8 +108,12 @@ public class Controller implements peersim.core.Control{
 		return false;
 	}
 
-	public static Integer generateNewDataId() {
-		dataId++;
-		return dataId;
+	public int generateNewDataId() {
+		int msgUid = new Random().nextInt(1000);
+		while (msgUids.contains(msgUid)) {
+			msgUid = new Random().nextInt(1000);
+		}
+		msgUids.add(msgUid);
+		return msgUid;
 	}
 }

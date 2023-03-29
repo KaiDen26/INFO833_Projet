@@ -99,7 +99,7 @@ public class Message {
     	return this.type;
     }
     
-    public int getId() {
+    public Integer getId() {
 		return this.id;
 	}
 
