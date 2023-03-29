@@ -79,7 +79,8 @@ public class DhtNode implements EDProtocol {
     }
 
     // affichage lors de la reception
-    private void receive(Message msg) {
+    @SuppressWarnings("unchecked")
+	private void receive(Message msg) {
     	
     	DhtNode sender = msg.getLastSender();
     	
@@ -216,14 +217,20 @@ public class DhtNode implements EDProtocol {
 		}
 		case DELIVER: {
 			
-			DhtNode dest = msg.getTarget();
-			
 			if(msg.getSenders().size() > Initializer.getNodeNb()) {
 				System.out.println(prefixMsg + " Timed out");
 				break;
 			} 
 			
-			if(msg.getId() > this.uid && msg.getId() < this.rightNeighbor.getUid()) {
+			/*if(this.leftNeighbor.getUid() > this.uid && msg.getId() < this.uid) {
+				
+			}
+			
+			if(this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid) {
+				
+			} */
+			
+			if((msg.getId() > this.uid && msg.getId() < this.rightNeighbor.getUid()) || (this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid)) {
 				
 				int dist = Math.abs(msg.getId() - this.getUid());
 				int dist2 = Math.abs(msg.getId() - this.rightNeighbor.getUid());
@@ -237,7 +244,7 @@ public class DhtNode implements EDProtocol {
 					deliverDataTo = this.rightNeighbor;
 				}
 				
-				System.out.println(prefixMsg + " id : " + msg.getId() + " ,Message's content : " + msg.getContent());
+				System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
 				
 				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
 	    		addData.setTarget(this);
@@ -255,7 +262,7 @@ public class DhtNode implements EDProtocol {
 				break;
 				
 			}
-			if(msg.getId() < this.uid && msg.getId() > this.leftNeighbor.getUid()) {
+			if((msg.getId() < this.uid && msg.getId() > this.leftNeighbor.getUid()) || (this.leftNeighbor.getUid() > this.uid && msg.getId() < this.uid)) {
 				
 				int dist = Math.abs(msg.getId() - this.getUid());
 				int dist2 = Math.abs(msg.getId() - this.leftNeighbor.getUid());
@@ -270,7 +277,7 @@ public class DhtNode implements EDProtocol {
 				}
 				
 				
-				System.out.println(prefixMsg + " id : " + msg.getId() + " ,Message's content : " + msg.getContent());
+				System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
 				
 				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
 	    		addData.setTarget(this);
@@ -289,9 +296,9 @@ public class DhtNode implements EDProtocol {
 				
 			}
 			
-			if(msg.getId() == this.getUid()) {
+			if(msg.getId() == this.uid) {
 				
-				System.out.println(prefixMsg + " id : " + msg.getId() + " ,Message's content : " + msg.getContent());
+				System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
 				
 				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
 	    		addData.setTarget(this);
@@ -321,10 +328,11 @@ public class DhtNode implements EDProtocol {
 				}
 				else {
 					
-					for(DhtNode i: this.rootingTable.keySet()) {
-						if(i.getUid() == msg.getId()) {
-							deliverTo = i;
-							deliverToId = this.rootingTable.get(i);
+					for(DhtNode node: this.rootingTable.keySet()) {
+						if(node.getUid() == msg.getId()) {
+							deliverTo = node;
+							deliverToId = this.rootingTable.get(node);
+							break;
 						}
 					}
 					
@@ -356,7 +364,7 @@ public class DhtNode implements EDProtocol {
 				}
 				
 				this.send(msg, Network.get(deliverToId));
-				System.out.println(prefixMsg + " id : " + msg.getId() + " Delivering message to " + deliverTo.getUid());	
+				System.out.println(prefixMsg + "Delivering message to " + deliverTo.getUid() + " {id = " + msg.getId() + "}");	
 				
 			}
 			
@@ -453,7 +461,7 @@ public class DhtNode implements EDProtocol {
 		}
 		case ADD_ALL_DATA: {
 			
-			Map<Integer, Message> Data = (Map<Integer, Message>) msg.getContent();
+			Map<Integer, Message> data = (Map<Integer, Message>) msg.getContent();
 			
 			if(msg.getRemaining() > 0) {
 				
@@ -478,17 +486,17 @@ public class DhtNode implements EDProtocol {
 			
 			if(this.dataInfos.keySet().contains(msg.getTarget())) {
 				
-				for(Integer i: Data.keySet()) {
+				for(int i : data.keySet()) {
 					
 					if(!this.dataInfos.get(msg.getTarget()).keySet().contains(i)) {
 						Map<Integer, Message> currentInfos = this.dataInfos.get(msg.getTarget());
-						currentInfos.put(i, Data.get(i));
+						currentInfos.put(i, data.get(i));
 						this.dataInfos.put(msg.getTarget(), currentInfos);
 					}	
 				}
 	    	} else {
 	    		
-	    		this.dataInfos.put(msg.getTarget(), Data);
+	    		this.dataInfos.put(msg.getTarget(), data);
 	    		
 	    	}
 			

@@ -43,16 +43,16 @@ public class Initializer implements peersim.core.Control {
 		DhtNode node0 = (DhtNode)Network.get(0).getProtocol(dhtPid);
 		node0.setNeighbors(node0, node0);
 		node0.setTransportLayer(0);
-		int node0Uid = new Random().nextInt(1000);
+		int node0Uid = new Random().nextInt(nodeNb * 10);
 		node0.setNodeUid(node0Uid);
 		
 		//pour chaque noeud, le module fait le lien entre la couche transport et la couche applicative et leur donne un uid unique
 		for (int i = 1; i < nodeNb; i++) {
 			
 			//On fait en sorte que le uid soit unique
-			int nodeUid = new Random().nextInt(1000);
+			int nodeUid = new Random().nextInt(nodeNb * 10);
 			while (nodeUids.contains(nodeUid)) {
-				nodeUid = new Random().nextInt(1000);
+				nodeUid = new Random().nextInt(nodeNb * 10);
 			}
 			nodeUids.add(nodeUid);
 			DhtNode current = (DhtNode) Network.get(i).getProtocol(dhtPid);
