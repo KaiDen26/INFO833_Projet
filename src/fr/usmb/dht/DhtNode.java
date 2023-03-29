@@ -216,6 +216,7 @@ public class DhtNode implements EDProtocol {
 				
 				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
 	    		addData.setRemaining(3);
+	    		addData.setId(Controller.generateNewDataId());
 	        	this.send(addData, getMyNode());
 				
 			} else {
@@ -260,12 +261,12 @@ public class DhtNode implements EDProtocol {
 			
 			if(this.dataInfos.keySet().contains(sender)) {
 	    		Map<Integer, Message> currentInfos = this.dataInfos.get(sender);
-	    		currentInfos.put(Controller.generateNewDataId(), msg.data2Save());
+	    		currentInfos.put(msg.getId(), msg.data2Save());
 	    		this.dataInfos.put(sender, currentInfos);
 	    		
 	    	} else {
 	    		Map<Integer, Message> newInfos = new HashMap<>();
-	    		newInfos.put(Controller.generateNewDataId(), msg.data2Save());
+	    		newInfos.put(msg.getId(), msg.data2Save());
 	    		this.dataInfos.put(sender, newInfos);
 	    	}
 			
@@ -286,6 +287,7 @@ public class DhtNode implements EDProtocol {
     	/*if(!msg.isType(MessageType.ADD_DATA)) {
     		Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
     		addData.setRemaining(3);
+    		addData.setId(Controller.generateNewDataId());
         	this.send(addData, getMyNode());
     	}*/
     	
@@ -303,7 +305,7 @@ public class DhtNode implements EDProtocol {
     			
     			Message message = this.dataInfos.get(currentNode).get(id);
     			
-    			System.out.println("{" + id + "} - " + message.toStringInfos() + " to " + message.getTarget() +" (" + message.getContent() + ")");
+    			System.out.println("{" + id + "} - " + message.toString() + " to " + message.getTarget() +" (" + message.getContent() + ")");
     			
     		}
     		

@@ -65,6 +65,9 @@ public class Controller implements peersim.core.Control{
 		
 		this.steps.add(node2::showInfos);
 		
+		DhtNode node3 = (DhtNode) Network.get(3).getProtocol(this.dhtPid);
+		this.steps.add(node3::showInfos);
+		
 	}
 	 
 	public void sendMsg(DhtNode node, Message msg, Node dest) {

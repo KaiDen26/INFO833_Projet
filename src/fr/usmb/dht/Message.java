@@ -18,7 +18,9 @@ public class Message {
     
     private Message data;
     
-    Message(MessageType type, Object content) {
+    private int id;
+    
+	Message(MessageType type, Object content) {
     	this.type = type;
 		this.content = content;
     }
@@ -89,17 +91,16 @@ public class Message {
     	return this.type;
     }
     
-    public String toString() {
-    	
-    	if(!this.senders.get(senders.size() - 1).equals(this.senders.get(0))) {
-    		return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1) + " (Uid : " + this.senders.get(senders.size() - 1).getUid()+ ")";
-    	} else {
-    		return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1);
-    	}
-    	
-    }
+    public int getId() {
+		return this.id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
     
-    public String toStringInfos() {
+    public String toString() {
     	
     	return "[" + this.type.getDescription() + "] from " + this.senders.get(0) + " (Uid : " + this.senders.get(0).getUid()+ ")";
 
