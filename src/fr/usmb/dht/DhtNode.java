@@ -4,7 +4,6 @@ import peersim.edsim.*;
 import peersim.core.*;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -181,6 +180,9 @@ public class DhtNode implements EDProtocol {
 				
 			}
 			
+			Message removeDataMsg = new Message(MessageType.REMOVE_DATA,"Remove your Data",this);
+			removeDataMsg.setRemaining(3);
+			this.send(removeDataMsg, getMyNode());
 			
 			
 			
@@ -235,7 +237,8 @@ public class DhtNode implements EDProtocol {
 				System.out.println(prefixMsg + "Message's content : " + msg.getContent());
 				
 				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-	    		addData.setRemaining(3);
+	    		addData.setTarget(this);
+				addData.setRemaining(3);
 	    		addData.setId(Controller.generateNewDataId());
 	        	this.send(addData, getMyNode());
 	        	
@@ -336,15 +339,97 @@ public class DhtNode implements EDProtocol {
 				
 			}
 			
-			if(this.dataInfos.keySet().contains(sender)) {
-	    		Map<Integer, Message> currentInfos = this.dataInfos.get(sender);
+			if(this.dataInfos.keySet().contains(msg.getTarget())) {
+	    		Map<Integer, Message> currentInfos = this.dataInfos.get(msg.getTarget());
 	    		currentInfos.put(msg.getId(), msg.data2Save());
-	    		this.dataInfos.put(sender, currentInfos);
+	    		this.dataInfos.put(msg.getTarget(), currentInfos);
 	    		
 	    	} else {
 	    		Map<Integer, Message> newInfos = new HashMap<>();
 	    		newInfos.put(msg.getId(), msg.data2Save());
-	    		this.dataInfos.put(sender, newInfos);
+	    		this.dataInfos.put(msg.getTarget(), newInfos);
+	    	}
+			
+			break;
+			
+		}
+		case REMOVE_DATA: {
+			
+			if(msg.getRemaining() > 0) {
+				
+				msg.decreaseRemaining();
+				
+				if(!msg.getSenders().contains(this.leftNeighbor) && !msg.getSenders().contains(this.rightNeighbor)) {
+					this.send(msg, Network.get(this.rightNeighbor.getId()));
+					this.send(msg, Network.get(this.leftNeighbor.getId()));
+				}
+				else if(msg.getSenders().contains(this.leftNeighbor)) {
+					
+					this.send(msg, Network.get(this.rightNeighbor.getId()));
+					
+				} else {
+					
+					this.send(msg, Network.get(this.leftNeighbor.getId()));
+					
+				}
+			}
+			
+	    	this.dataInfos.remove(msg.getTarget());
+	    	
+	    	if(this != msg.getTarget()) {
+	    		
+		    	Map<Integer, Message> Data = this.dataInfos.get(this);
+		    	
+		    	if(Data != null) {
+		    		Message addAllDataMsg = new Message(MessageType.ADD_ALL_DATA, Data);
+			    	addAllDataMsg.setTarget(this);
+			    	this.send(addAllDataMsg, getMyNode());
+		    	}
+
+	    	}
+	    	
+			break;
+			
+		}
+		case ADD_ALL_DATA: {
+			
+			Map<Integer, Message> Data = (Map<Integer, Message>) msg.getContent();
+			
+			if(msg.getRemaining() > 0) {
+				
+				msg.decreaseRemaining();
+				
+				if(!msg.getSenders().contains(this.leftNeighbor) && !msg.getSenders().contains(this.rightNeighbor)) {
+					this.send(msg, Network.get(this.rightNeighbor.getId()));
+					this.send(msg, Network.get(this.leftNeighbor.getId()));
+				}
+				else if(msg.getSenders().contains(this.leftNeighbor)) {
+					
+					this.send(msg, Network.get(this.rightNeighbor.getId()));
+					
+				} else {
+					
+					this.send(msg, Network.get(this.leftNeighbor.getId()));
+					
+				}
+				
+				
+			}
+			
+			if(this.dataInfos.keySet().contains(msg.getTarget())) {
+				
+				for(Integer i: Data.keySet()) {
+					
+					if(!this.dataInfos.get(msg.getTarget()).keySet().contains(i)) {
+						Map<Integer, Message> currentInfos = this.dataInfos.get(msg.getTarget());
+						currentInfos.put(i, Data.get(i));
+						this.dataInfos.put(msg.getTarget(), currentInfos);
+					}	
+				}
+	    	} else {
+	    		
+	    		this.dataInfos.put(msg.getTarget(), Data);
+	    		
 	    	}
 			
 			break;

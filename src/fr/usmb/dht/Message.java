@@ -87,6 +87,10 @@ public class Message {
     	return this.target;
     }
     
+    public void setTarget(DhtNode target) {
+    	this.target = target;
+    }
+    
     public DhtNode[] getNeighbors() {
     	return this.neighbors;
     }
