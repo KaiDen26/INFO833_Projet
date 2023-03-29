@@ -35,6 +35,8 @@ public class DhtNode implements EDProtocol {
     private DhtNode leftNeighbor;
     
     private HashMap<DhtNode, Map<Integer, Message>> dataInfos = new HashMap<>();
+    
+    private HashMap<DhtNode, Integer> rootingTable = new HashMap<>();
 
     public DhtNode(String prefix) {
     	
@@ -170,6 +172,18 @@ public class DhtNode implements EDProtocol {
 			
 			System.out.println("[" + msg.getType().getDescription() + "] from " + this.uid + " -> I leave the network");
 			
+			
+			for(DhtNode node : this.rootingTable.keySet()) {
+				
+				Message removeLink = new Message(MessageType.REMOVE_LINK, "Remove your link with me !", this);
+				this.send(removeLink, Network.get(node.getId()));
+				this.rootingTable.remove(node);
+				
+			}
+			
+			
+			
+			
 			break;
 		}
 		case PLACE_BOTH: {
@@ -202,12 +216,18 @@ public class DhtNode implements EDProtocol {
 			
 			DhtNode dest = msg.getTarget();
 			
-			// ICI FAIRE CONDITION POUR CONNAITRE LA DISTANCE ENTRE LE DEBUT ET FIN POUR OPTI LES LIAISONS EN PRENANT LA MOITIE SI SUPERIEUR A 8
+			if(msg.getSenders().size() > Initializer.getNodeNb()) {
+				System.out.println(prefixMsg + " Timed out");
+				break;
+			} 
 			
-			if(this.equals(msg.getSenders().get(0)) && msg.getSenders().size() > 1) {
-				
-				// ICI A AJOUTER CALL MODIF TABLE DE ROUTAGE 
-				System.out.println("[" + msg.getTarget().getUid() + "] -> Unknown Node ");
+			if(msg.getTarget().getUid() > this.uid && msg.getTarget().getUid() < this.rightNeighbor.getUid()) {
+				System.out.println(prefixMsg + " Could not find");
+				break;
+			}
+			if(msg.getTarget().getUid() < this.uid && msg.getTarget().getUid() > this.leftNeighbor.getUid()) {
+				System.out.println(prefixMsg + " Could not find");
+				break;
 			}
 			
 			if(dest.equals(this)) {
@@ -218,23 +238,80 @@ public class DhtNode implements EDProtocol {
 	    		addData.setRemaining(3);
 	    		addData.setId(Controller.generateNewDataId());
 	        	this.send(addData, getMyNode());
+	        	
+	        	if(msg.getSenders().size() > 3) {
+	        		
+	        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", this);
+	        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
+	        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
+	        	}
 				
 			} else {
 				
-				if (dest.getUid() > this.uid) {
-					this.send(msg, Network.get(this.rightNeighbor.getId()));
-					System.out.println(prefixMsg + "Delivering message to " + this.rightNeighbor.getUid());
+				DhtNode deliverTo = null;
+				int deliverToId = 0;
+				
+				if(this.rightNeighbor == dest) {
+					deliverTo = this.rightNeighbor;
+					deliverToId = this.rightNeighbor.getId();
 				}
-				else {
-					this.send(msg, Network.get(this.leftNeighbor.getId()));
-					System.out.println(prefixMsg + "Delivering message to " + this.leftNeighbor.getUid());	
+				else if(this.leftNeighbor == dest) {
+					deliverTo = this.leftNeighbor;
+					deliverToId = this.leftNeighbor.getId();
+				} 
+				else if(this.rootingTable.keySet().contains(dest)) {
+					deliverTo = dest;
+					deliverToId = this.rootingTable.get(dest);
+				} else {
+					
+					
+					double diff = Double.POSITIVE_INFINITY;
+					
+					for(DhtNode node : this.rootingTable.keySet()) {
+						
+						if(Math.abs(dest.getUid() - node.getUid()) < diff) {
+							diff = Math.abs(dest.getUid() - node.getUid());
+							deliverTo = node;
+							deliverToId = this.rootingTable.get(node);
+						}
+						
+					}
+					
+					if(dest.getUid() < this.uid) {
+						if(Math.abs(dest.getUid() - this.leftNeighbor.getUid()) < diff) {
+							deliverTo = this.leftNeighbor;
+							deliverToId = this.leftNeighbor.getId();
+						}
+					}
+					else if(dest.getUid() > this.uid) {
+						if(Math.abs(dest.getUid() - this.rightNeighbor.getUid()) < diff) {
+							deliverTo = this.rightNeighbor;
+							deliverToId = this.rightNeighbor.getId();
+						}
+					}
+					
 				}
 				
-				
+				this.send(msg, Network.get(deliverToId));
+				System.out.println(prefixMsg + "Delivering message to " + deliverTo.getUid());	
 				
 			}
 			
 			break;
+		}
+		case CREATE_LINK: {
+			
+			this.rootingTable.put(msg.getTarget(), msg.getTarget().getId());
+			System.out.println(prefixMsg + "Creating link between " + msg.getTarget().getUid() + " and " + this.uid);	
+			break;
+			
+		}
+		case REMOVE_LINK: {
+			
+			this.rootingTable.remove(msg.getTarget());
+			System.out.println(prefixMsg + "Removing link between " + msg.getTarget().getUid() + " and " + this.uid);	
+			break;
+			
 		}
 		case ADD_DATA: {
 			

@@ -18,7 +18,7 @@ public class Controller implements peersim.core.Control{
 	 public Controller(String prefix) {
 	    	
 		// recuperation du pid de la couche applicative
-	    this.dhtPid = Initializer.getdhtPid();
+	    this.dhtPid = Initializer.getDhtPid();
 	    int nodeNb = Network.size();
 		
 		// pour chaque noeud, on les ajoutent à l'anneau
@@ -60,13 +60,28 @@ public class Controller implements peersim.core.Control{
 		Message deliverMsg = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
 		this.steps.add(() -> sendMsg(node2, deliverMsg, Network.get(2)));
 		
-		Message deliverMsg2 = new Message(MessageType.DELIVER, 8000.54, (DhtNode) Network.get(4).getProtocol(this.dhtPid));
+		Message deliverMsg2 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		this.steps.add(() -> sendMsg(node2, deliverMsg2, Network.get(2)));
+		
+		
+		DhtNode node3 = (DhtNode) Network.get(3).getProtocol(this.dhtPid);
+		Message leaving = new Message(MessageType.LEAVE, "Leaving", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		this.steps.add(() -> sendMsg(node3, leaving, Network.get(3)));
+		
+		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), treeMsg, Network.get(0)));
+		
+		Message deliverMsg3 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		this.steps.add(() -> sendMsg(node2, deliverMsg3, Network.get(2)));
+		
+		
+		
+		/*Message deliverMsg2 = new Message(MessageType.DELIVER, 8000.54, (DhtNode) Network.get(4).getProtocol(this.dhtPid));
 		this.steps.add(() -> sendMsg(node2, deliverMsg2, Network.get(2)));
 		
 		this.steps.add(node2::showInfos);
 		
 		DhtNode node3 = (DhtNode) Network.get(3).getProtocol(this.dhtPid);
-		this.steps.add(node3::showInfos);
+		this.steps.add(node3::showInfos); */
 		
 	}
 	 

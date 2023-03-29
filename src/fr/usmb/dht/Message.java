@@ -63,6 +63,10 @@ public class Message {
     	return this.senders.get(senders.size() - 1);
     }
     
+    public DhtNode getFirstSender() {
+    	return this.senders.get(0);
+    }
+    
     public void setRemaining(int remaining) {
     	this.remaining = remaining;
     }

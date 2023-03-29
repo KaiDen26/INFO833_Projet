@@ -18,6 +18,7 @@ import peersim.config.*;
 public class Initializer implements peersim.core.Control {
     
     private static int dhtPid;
+    private static int nodeNb;
     
     private ArrayList<Integer> nodeUids = new ArrayList<>();
 
@@ -31,7 +32,7 @@ public class Initializer implements peersim.core.Control {
     public boolean execute() {
     	
     	// recuperation de la taille du reseau
-		int nodeNb = Network.size();
+		nodeNb = Network.size();
 		
 		if (nodeNb < 1) {
 		    System.err.println("Network size is not positive");
@@ -64,7 +65,11 @@ public class Initializer implements peersim.core.Control {
 		return false;
     }
     
-    public static int getdhtPid() {
+    public static int getNodeNb() {
+    	return nodeNb;
+    }
+    
+    public static int getDhtPid() {
     	return dhtPid;
     }
     
