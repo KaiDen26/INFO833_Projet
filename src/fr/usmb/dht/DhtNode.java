@@ -214,11 +214,22 @@ public class DhtNode implements EDProtocol {
 				
 				System.out.println(prefixMsg + "Message's content : " + msg.getContent());
 				
+				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
+	    		addData.setRemaining(3);
+	        	this.send(addData, getMyNode());
 				
 			} else {
 				
-				this.send(msg, Network.get(this.rightNeighbor.getId()));
-				System.out.println(prefixMsg + "Delivering message to " + this.rightNeighbor.getUid());
+				if (dest.getUid() > this.uid) {
+					this.send(msg, Network.get(this.rightNeighbor.getId()));
+					System.out.println(prefixMsg + "Delivering message to " + this.rightNeighbor.getUid());
+				}
+				else {
+					this.send(msg, Network.get(this.leftNeighbor.getId()));
+					System.out.println(prefixMsg + "Delivering message to " + this.leftNeighbor.getUid());	
+				}
+				
+				
 				
 			}
 			
@@ -272,11 +283,11 @@ public class DhtNode implements EDProtocol {
 			throw new IllegalArgumentException("Unexpected value");
 		}
     	
-    	if(!msg.isType(MessageType.ADD_DATA)) {
+    	/*if(!msg.isType(MessageType.ADD_DATA)) {
     		Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
     		addData.setRemaining(3);
         	this.send(addData, getMyNode());
-    	}
+    	}*/
     	
     }
     
@@ -292,7 +303,7 @@ public class DhtNode implements EDProtocol {
     			
     			Message message = this.dataInfos.get(currentNode).get(id);
     			
-    			System.out.println("{" + id + "} - " + message + " (" + message.getContent() + ")");
+    			System.out.println("{" + id + "} - " + message.toStringInfos() + " to " + message.getTarget() +" (" + message.getContent() + ")");
     			
     		}
     		

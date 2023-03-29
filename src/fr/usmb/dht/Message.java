@@ -6,7 +6,7 @@ import java.util.List;
 public class Message {
 
     public MessageType type;
-    private String content;
+    private Object content;
     
     private DhtNode target;
 
@@ -18,24 +18,24 @@ public class Message {
     
     private Message data;
     
-    Message(MessageType type, String content) {
+    Message(MessageType type, Object content) {
     	this.type = type;
 		this.content = content;
     }
     
-    Message(MessageType type, String content, DhtNode nodeToPlace) {
+    Message(MessageType type, Object content, DhtNode nodeToPlace) {
     	this.type = type;
 		this.content = content;
 		this.target = nodeToPlace;
     }
     
-    Message(MessageType type, String content, Message data) {
+    Message(MessageType type, Object content, Message data) {
     	this.type = type;
 		this.content = content;
 		this.data = data;
     }
     
-    Message(MessageType type, String content, DhtNode[] neighbors) {
+    Message(MessageType type, Object content, DhtNode[] neighbors) {
     	this.type = type;
 		this.content = content;
 		this.neighbors = neighbors;
@@ -73,7 +73,7 @@ public class Message {
     	this.remaining--;
     }
 
-    public String getContent() {
+    public Object getContent() {
     	return this.content;
     }
     
@@ -92,11 +92,17 @@ public class Message {
     public String toString() {
     	
     	if(!this.senders.get(senders.size() - 1).equals(this.senders.get(0))) {
-    		return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1) + " about " + this.senders.get(senders.size() - 1).getUid();
+    		return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1) + " (Uid : " + this.senders.get(senders.size() - 1).getUid()+ ")";
     	} else {
     		return "[" + this.type.getDescription() + "] from " + this.senders.get(senders.size() - 1);
     	}
     	
+    }
+    
+    public String toStringInfos() {
+    	
+    	return "[" + this.type.getDescription() + "] from " + this.senders.get(0) + " (Uid : " + this.senders.get(0).getUid()+ ")";
+
     }
 
     
