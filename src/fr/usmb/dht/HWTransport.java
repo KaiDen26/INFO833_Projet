@@ -9,6 +9,9 @@ public class HWTransport implements Protocol {
     // variables pour calculer la latence entre les noeuds
     private final long min;
     
+    /*
+     * Portée du transport
+     */
     private final long range;
     
     
@@ -32,7 +35,7 @@ public class HWTransport implements Protocol {
     }
     
 
-    // envoi d'un message : il suffit de l'ajouter a la file d'evenements
+    // envoi d'un message : il suffit de l'ajouter à la file d'evenements
     public void send(Node src, Node dest, Object msg, int pid) {
 		long delay = getLatency(src,dest);
 		EDSimulator.add(delay, msg, dest, pid);

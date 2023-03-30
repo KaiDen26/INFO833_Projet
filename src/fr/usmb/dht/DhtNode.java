@@ -12,19 +12,29 @@ import peersim.config.*;
 
 public class DhtNode implements EDProtocol {
     
-    // identifiant de la couche transport
+	/*
+	 * Identifiant de la couche de transport
+	 */
     private int transportPid;
 
-    // objet couche transport
+    /*
+     * Objet de la couche transport
+     */
     private HWTransport transport;
 
-    // identifiant de la couche courante (la couche applicative)
+    /*
+     * Identifiant de la couche courante (applicative)
+     */
     private int mypid;
 
-    // le numero de noeud dans l'ordre de création
+    /*
+     * Le numéro du noeud dans l'ordre de création
+     */
     private int id;
     
-    // l'identifiant du noeud
+    /*
+     * L'identifiant unique du noeud
+     */
     private int uid;
 
 	// prefixe de la couche (nom de la variable de protocole du fichier de config)
@@ -185,14 +195,14 @@ public class DhtNode implements EDProtocol {
 			removeDataMsg.setRemaining(3);
 			this.send(removeDataMsg, getMyNode());
 			
-			
+			Initializer.removeNodeUid(this.uid);
 			
 			break;
 		}
 		case PLACE_BOTH: {
 			
-			this.leftNeighbor = msg.getNeighbors()[0];
-			this.rightNeighbor = msg.getNeighbors()[1];
+			this.leftNeighbor = msg.getTargets()[0];
+			this.rightNeighbor = msg.getTargets()[1];
 			
 			System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid() + " | Change Right Node to " + this.rightNeighbor.getUid());
 			
@@ -545,11 +555,7 @@ public class DhtNode implements EDProtocol {
 			
 			return getTree(message, startingNode, currentNode.getRightNeighor());
 			
-		}  else {
-			
-			message += " " + currentNode.getUid() + " -> ";
-		
-		}
+		} 
 		
 		return message;
     	
@@ -563,8 +569,6 @@ public class DhtNode implements EDProtocol {
 			
 			return getTreeNode(message, startingNode, currentNode.getRightNeighor());
 			
-		} else {
-			message += " Node " + currentNode.getId() + " -> ";
 		}
 		
 		return message;
@@ -640,7 +644,6 @@ public class DhtNode implements EDProtocol {
     
     /**
      * Fonction pour ajouter un voisin à droite
-     * 
      */
     public void setRightNeighbor(DhtNode node) {
     	
@@ -650,7 +653,6 @@ public class DhtNode implements EDProtocol {
     
     /**
      * Fonction pour ajouter un voisin à gauche
-     * 
      */
     public void setLeftNeighbor(DhtNode node) {
     	
@@ -658,14 +660,4 @@ public class DhtNode implements EDProtocol {
     	
     }
     
-    /**
-     * Fonction pour savoir si ce noeud a pour voisin un autre noeud
-     * 
-     */
-    public boolean containsNeighbor(DhtNode node) {
-    	
-    	return this.leftNeighbor == node || this.rightNeighbor == node;
-    	
-    }
-
 }

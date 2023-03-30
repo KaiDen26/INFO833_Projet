@@ -8,34 +8,49 @@ import java.util.Random;
 
 public class Controller implements peersim.core.Control{
 	
+	 /*
+	  * Pid de la dht
+	  */
 	 private int dhtPid;
 	
+	 /*
+	  * Compteur d'execution d'étapes
+	  */
 	 private int executedStep = 0;
+	 
+	 /*
+	  * Liste d'étapes
+	  */
 	 private final List<Runnable> steps = new ArrayList<>();
 	 
-	 private ArrayList<Integer> msgUids = new ArrayList<>();
+	 /*
+	  * Liste des identifiants des messages
+	  */
+	 private ArrayList<Integer> msgIds = new ArrayList<>();
 
 	 public Controller(String prefix) {
 	    	
-		// recuperation du pid de la couche applicative
+		// Récuperation du pid de la couche applicative
 	    this.dhtPid = Initializer.getDhtPid();
-	    int nodeNb = Network.size();
+	    // Récupération du nombre de noeud dans la dht
+	    int nodeNb = Initializer.getNodeNb();
 		
-		// pour chaque noeud, on les ajoutent à l'anneau
+		// Pour chaque noeud, on les ajoute à l'anneau
 		for (int i = 1; i < nodeNb; i++) {
 			
+			// On récupère le noeud actuel
 			DhtNode current = (DhtNode) Network.get(i).getProtocol(this.dhtPid);
 
+			// On lui attribut un destinataire aléatoire
+			// Celui-ci sera le premier noeud auquel il demandera de se placer
 		    int randomNodeId = new Random().nextInt(i);
-		    
-		    //System.out.println(i + " " + randomNodeId);
-		    
 		    while (randomNodeId == i) {
 				randomNodeId = new Random().nextInt(i);
 			}
 		    
 		    int destId = randomNodeId;
 			
+		    // On envoie un message de type join au noeud selectionné
 			Message joinMsg = new Message(MessageType.JOIN, "Joining the network !", current);
 			this.steps.add(() -> sendMsg(current, joinMsg, Network.get(destId)));
 			
@@ -97,10 +112,18 @@ public class Controller implements peersim.core.Control{
 		
 	}
 	 
+	/*
+	 * Fonction permettant d'envoyer un message à partir d'un noeud vers un autre noeud
+	 */
 	public void sendMsg(DhtNode node, Message msg, Node dest) {
 		node.send(msg, dest);
 	}
 	 
+	/*
+	 * Fonction principale appelée par le simulateur
+	 * Celle-ci réalise l'execution de chaque étapes stockées
+	 * En réalisant cela, nous n'avons plus de problèmes avec les latences des différents envoies de messages
+	 */
 	@Override
 	public boolean execute() {
 		
@@ -112,12 +135,19 @@ public class Controller implements peersim.core.Control{
 		return false;
 	}
 
+	/*
+	 * Fonction permettant de générer un nouvel identifiant unique
+	 */
 	public int generateNewDataId() {
-		int msgUid = new Random().nextInt(Initializer.getNodeNb()  * 10);
-		while (msgUids.contains(msgUid)) {
-			msgUid = new Random().nextInt(Initializer.getNodeNb()  * 10);
+		
+		int msgId = new Random().nextInt(Initializer.getNodeNb()  * 10);
+		
+		while (msgIds.contains(msgId)) {
+			msgId = new Random().nextInt(Initializer.getNodeNb()  * 10);
 		}
-		msgUids.add(msgUid);
-		return msgUid;
+		
+		msgIds.add(msgId);
+		return msgId;
+		
 	}
 }
