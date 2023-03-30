@@ -3,9 +3,7 @@ package fr.usmb.dht;
 import peersim.edsim.*;
 import peersim.core.*;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import peersim.config.*;
@@ -37,20 +35,42 @@ public class DhtNode implements EDProtocol {
      */
     private int uid;
 
-	// prefixe de la couche (nom de la variable de protocole du fichier de config)
+    /*
+     * Prefixe de la couche (nom de la variable de protocole du fichier de config)
+     */
     private String prefix;
     
+    /*
+     * Noeud se situant à sa droite dans l'anneau
+     */
     private DhtNode rightNeighbor;
+    
+    /*
+     * Noeud se situant à sa gauche dans l'anneau
+     */
     private DhtNode leftNeighbor;
     
+    /*
+     * Variable contenant les données à sauvegarder
+     * C'est un dictionnaire avec comme clé un noeud et comme valeur une Map
+     * Cette map a pour clé l'identifiant de la donnée et comme valeur la donnée elle-même (objet message)
+     */
     private HashMap<DhtNode, Map<Integer, Message>> dataInfos = new HashMap<>();
     
+    /*
+     * Variable représentant la table de routage
+     * Dictionnaire avec comme clé un noeud et comme valeur son numéro de noeud
+     */
     private HashMap<DhtNode, Integer> rootingTable = new HashMap<>();
 
+    /*
+     * Constructeur de la classe
+     */
     public DhtNode(String prefix) {
     	
 		this.prefix = prefix;
-		// initialisation des identifiants a partir du fichier de configuration
+		
+		// Initialisation des identifiants a partir du fichier de configuration
 		this.transportPid = Configuration.getPid(prefix + ".transport");
 		this.mypid = Configuration.getPid(prefix + ".myself");
 		this.transport = null;
@@ -58,449 +78,461 @@ public class DhtNode implements EDProtocol {
     }
     
 
-
-    // methode appelee lorsqu'un message est recu par le protocole HelloWorld du noeud
+    /*
+     * Méthode appelée lorsqu'un message est recu par le protocole HelloWorld du noeud
+     */
     public void processEvent( Node node, int pid, Object event ) {
     	
     	this.receive((Message)event);
     	
     }
     
-    // methode necessaire pour la creation du reseau (qui se fait par clonage d'un prototype)
+    /*
+     * Méthode necessaire pour la creation du réseau (qui se fait par clonage d'un prototype)
+     */
     public Object clone() {
-
 		DhtNode dolly = new DhtNode(this.prefix);
-	
 		return dolly;
     }
 
-    // liaison entre un objet de la couche applicative et un 
-    // objet de la couche transport situes sur le meme noeud
-    
+    /*
+     * Liaison entre un objet de la couche applicative et un 
+     * Objet de la couche transport situes sur le meme noeud
+     */
     public void setTransportLayer(int nodeId) {
     	this.id = nodeId;
     	this.transport = (HWTransport) Network.get(this.id).getProtocol(this.transportPid);
     }
 
-    // envoi d'un message (l'envoi se fait via la couche transport)
+    /*
+     * Envoi d'un message (l'envoi se fait via la couche transport)
+     */
     public void send(Message msg, Node dest) {
+    	// Ajout du noeud à la liste des relayeurs
     	msg.addSender(this);
     	this.transport.send(getMyNode(), dest, msg, this.mypid);
     }
 
-    // affichage lors de la reception
+    /*
+     * Cette méthode gère la reception des messages
+     * Elle est conséquente puisqu'elle va gérer tous ce qui touche à la réception
+     */
     @SuppressWarnings("unchecked")
 	private void receive(Message msg) {
     	
+    	// On récupère le dernier relayeur
     	DhtNode sender = msg.getLastSender();
     	
+    	// Préfixe pour les messages des logs
     	String prefixMsg = "[" + msg.getType().getDescription() + "] from " + msg.getLastSender().getUid() + " to " + this.uid + " -> ";
     	
+    	// Structure conditionnelle switch pour réaliser des opérations selon le type de message
     	switch (msg.type) {
-		case JOIN: { 
-			
-			if(sender.equals(msg.getTarget())) {
-				System.out.println("[" + msg.getType().getDescription() + "] from " + msg.getLastSender().getUid() + " -> I join the network");
+    		// Ici on s'intéresse aux messages de type join, lorsqu'un noeud rejoint l'anneau
+			case JOIN: { 
+				
+				// Si la cible est lui-même, alors il envoit un message de log signifiant qu'il a rejoint le réseau
+				if(sender.equals(msg.getTarget())) {
+					System.out.println("[" + msg.getType().getDescription() + "] from " + msg.getLastSender().getUid() + " -> I join the network");
+				}
+				
+				// Ici on traite le cas lorsqu'un second noeud rejoint l'anneau
+				// En effet, le premier noeud avait lui même comme voisins
+				if(this.leftNeighbor == this && this.rightNeighbor == this) {
+					
+					Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this, this});
+					this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
+					
+					this.rightNeighbor = msg.getTarget();
+					this.leftNeighbor = msg.getTarget();
+					System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid() + " | Change Right Node to " + this.rightNeighbor.getUid());
+					
+					break;
+				}
+				
+				
+				if(msg.getTarget().getUid() > this.uid) {
+					
+					if(msg.getTarget().getUid() < this.rightNeighbor.getUid() || (this.uid > this.rightNeighbor.getUid())) {
+						
+						Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this, this.rightNeighbor});
+						this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
+						
+						Message changeLeftMsg = new Message(MessageType.PLACE_LEFT, "Change your left neighbor !", msg.getTarget());
+						
+						this.send(changeLeftMsg, Network.get(this.rightNeighbor.getId()));
+	
+						this.rightNeighbor = msg.getTarget();
+						System.out.println(prefixMsg + "Change Right Node to " + this.rightNeighbor.getUid());
+						
+					} else {
+						
+						this.send(msg, Network.get(this.rightNeighbor.getId()));
+						
+						if(sender.equals(msg.getTarget())) {
+							System.out.println(prefixMsg + "Try to place me");
+						} else {
+							System.out.println(prefixMsg + "Try to place " + msg.getTarget().getUid());
+						}
+					}
+					
+				} else {
+	
+					if(msg.getTarget().getUid() > this.leftNeighbor.getUid()  || (this.uid < this.leftNeighbor.getUid())) {
+						
+						
+						Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this.leftNeighbor, this});
+						this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
+						
+						Message changeRightMsg = new Message(MessageType.PLACE_RIGHT, "Change your right neighbor !", msg.getTarget());
+						
+						this.send(changeRightMsg, Network.get(this.leftNeighbor.getId()));
+						this.leftNeighbor = msg.getTarget();
+						System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid());
+						
+						
+					} else {
+						
+						this.send(msg, Network.get(this.leftNeighbor.getId()));
+						
+						if(sender.equals(msg.getTarget())) {
+							System.out.println(prefixMsg + "Try to place me");
+						} else {
+							System.out.println(prefixMsg + "Try to place " + msg.getTarget().getUid());
+						}
+						
+					}
+					
+				}
+				
+				break;
 			}
-			
-			if(this.leftNeighbor == this && this.rightNeighbor == this) {
+			// Ici on s'intéresse aux messages de type leave, lorsqu'un noeud quitte l'anneau
+			case LEAVE: {
 				
-				Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this, this});
-				this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
+				Message changeLeftMsg = new Message(MessageType.PLACE_LEFT, "Change your left neighbor !", this.leftNeighbor);
+				Message changeRightMsg = new Message(MessageType.PLACE_RIGHT, "Change your right neighbor !", this.rightNeighbor);
 				
-				this.rightNeighbor = msg.getTarget();
-				this.leftNeighbor = msg.getTarget();
+				this.send(changeLeftMsg, Network.get(this.rightNeighbor.getId()));
+				this.send(changeRightMsg, Network.get(this.leftNeighbor.getId()));
+				
+				System.out.println("[" + msg.getType().getDescription() + "] from " + this.uid + " -> I leave the network");
+				
+				for(DhtNode node : this.rootingTable.keySet()) {
+					
+					Message removeLink = new Message(MessageType.REMOVE_LINK, "Remove your link with me !", this);
+					this.send(removeLink, Network.get(node.getId()));
+					this.rootingTable.remove(node);
+					
+				}
+				
+				Message removeDataMsg = new Message(MessageType.REMOVE_DATA,"Remove your Data",this);
+				removeDataMsg.setRemaining(3);
+				this.send(removeDataMsg, getMyNode());
+				
+				Initializer.removeNodeUid(this.uid);
+				
+				break;
+			}
+			case PLACE_BOTH: {
+				
+				this.leftNeighbor = msg.getTargets()[0];
+				this.rightNeighbor = msg.getTargets()[1];
+				
 				System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid() + " | Change Right Node to " + this.rightNeighbor.getUid());
 				
+				Message collectRightMsg = new Message(MessageType.COLLECT_DATA, "Send me your data !", this);
+				collectRightMsg.setRemaining(3);
+				this.send(collectRightMsg, Network.get(this.rightNeighbor.getId()));
+				Message collectLeftMsg = new Message(MessageType.COLLECT_DATA, "Send me your data !", this);
+				collectLeftMsg.setRemaining(3);
+				this.send(collectLeftMsg, Network.get(this.leftNeighbor.getId()));
 				
 				break;
 			}
-			
-			if(msg.getTarget().getUid() > this.uid) {
+			case PLACE_LEFT: {
 				
-				if(msg.getTarget().getUid() < this.rightNeighbor.getUid() || (this.uid > this.rightNeighbor.getUid())) {
-					
-					Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this, this.rightNeighbor});
-					this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
-					
-					Message changeLeftMsg = new Message(MessageType.PLACE_LEFT, "Change your left neighbor !", msg.getTarget());
-					
-					this.send(changeLeftMsg, Network.get(this.rightNeighbor.getId()));
-
-					this.rightNeighbor = msg.getTarget();
-					System.out.println(prefixMsg + "Change Right Node to " + this.rightNeighbor.getUid());
-					
-				} else {
-					
-					this.send(msg, Network.get(this.rightNeighbor.getId()));
-					
-					if(sender.equals(msg.getTarget())) {
-						System.out.println(prefixMsg + "Try to place me");
-					} else {
-						System.out.println(prefixMsg + "Try to place " + msg.getTarget().getUid());
-					}
-				}
+				this.leftNeighbor = msg.getTarget();
 				
-			} else {
-
-				if(msg.getTarget().getUid() > this.leftNeighbor.getUid()  || (this.uid < this.leftNeighbor.getUid())) {
-					
-					
-					Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this.leftNeighbor, this});
-					this.send(changeBothMsg, Network.get(msg.getTarget().getId()));
-					
-					Message changeRightMsg = new Message(MessageType.PLACE_RIGHT, "Change your right neighbor !", msg.getTarget());
-					
-					this.send(changeRightMsg, Network.get(this.leftNeighbor.getId()));
-					this.leftNeighbor = msg.getTarget();
-					System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid());
-					
-					
-				} else {
-					
-					this.send(msg, Network.get(this.leftNeighbor.getId()));
-					
-					if(sender.equals(msg.getTarget())) {
-						System.out.println(prefixMsg + "Try to place me");
-					} else {
-						System.out.println(prefixMsg + "Try to place " + msg.getTarget().getUid());
-					}
-					
-				}
+				System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid());
 				
-			}
-			
-			break;
-		}
-		case LEAVE: {
-			
-			Message changeLeftMsg = new Message(MessageType.PLACE_LEFT, "Change your left neighbor !", this.leftNeighbor);
-			Message changeRightMsg = new Message(MessageType.PLACE_RIGHT, "Change your right neighbor !", this.rightNeighbor);
-			
-			this.send(changeLeftMsg, Network.get(this.rightNeighbor.getId()));
-			this.send(changeRightMsg, Network.get(this.leftNeighbor.getId()));
-			
-			System.out.println("[" + msg.getType().getDescription() + "] from " + this.uid + " -> I leave the network");
-			
-			
-			for(DhtNode node : this.rootingTable.keySet()) {
-				
-				Message removeLink = new Message(MessageType.REMOVE_LINK, "Remove your link with me !", this);
-				this.send(removeLink, Network.get(node.getId()));
-				this.rootingTable.remove(node);
-				
-			}
-			
-			Message removeDataMsg = new Message(MessageType.REMOVE_DATA,"Remove your Data",this);
-			removeDataMsg.setRemaining(3);
-			this.send(removeDataMsg, getMyNode());
-			
-			Initializer.removeNodeUid(this.uid);
-			
-			break;
-		}
-		case PLACE_BOTH: {
-			
-			this.leftNeighbor = msg.getTargets()[0];
-			this.rightNeighbor = msg.getTargets()[1];
-			
-			System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid() + " | Change Right Node to " + this.rightNeighbor.getUid());
-			
-			Message collectRightMsg = new Message(MessageType.COLLECT_DATA, "Send me your data !", this);
-			collectRightMsg.setRemaining(3);
-			this.send(collectRightMsg, Network.get(this.rightNeighbor.getId()));
-			Message collectLeftMsg = new Message(MessageType.COLLECT_DATA, "Send me your data !", this);
-			collectLeftMsg.setRemaining(3);
-			this.send(collectLeftMsg, Network.get(this.leftNeighbor.getId()));
-			
-			break;
-		}
-		case PLACE_LEFT: {
-			
-			this.leftNeighbor = msg.getTarget();
-			
-			System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid());
-			
-			break;
-		}
-		case PLACE_RIGHT: {
-			
-			this.rightNeighbor = msg.getTarget();
-			
-			System.out.println(prefixMsg + "Change Right Node to " + this.rightNeighbor.getUid());
-			
-			
-			break;
-		}
-		case DELIVER: {
-			
-			if(msg.getSenders().size() > Initializer.getNodeNb()) {
-				System.out.println(prefixMsg + " Timed out");
 				break;
-			} 
-			
-			if((msg.getId() > this.uid && msg.getId() < this.rightNeighbor.getUid()) || (this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid)) {
-				
-				int dist = Math.abs(msg.getId() - this.getUid());
-				int dist2 = Math.abs(msg.getId() - this.rightNeighbor.getUid());
-				
-				DhtNode deliverDataTo = null;
-				int deliverToId;
-				
-				if(dist < dist2) {
-					deliverDataTo = this;
-					deliverToId = this.id;
-				}
-				else { 
-					deliverDataTo = this.rightNeighbor;
-					deliverToId = this.rightNeighbor.getId();
-				}
-				
-				System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
-				
-				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-	    		addData.setTarget(deliverDataTo);
-				addData.setRemaining(3);
-	    		addData.setId(msg.getId());
-	        	this.send(addData, Network.get(deliverToId));
-	        	
-	        	if(msg.getSenders().size() > 4) {
-	        		
-	        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", deliverDataTo);
-	        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
-	        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
-	        	}
-	        	
-				break;
-				
 			}
-			if((msg.getId() < this.uid && msg.getId() > this.leftNeighbor.getUid()) || (this.leftNeighbor.getUid() > this.uid && msg.getId() < this.uid)) {
+			case PLACE_RIGHT: {
 				
-				int dist = Math.abs(msg.getId() - this.getUid());
-				int dist2 = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+				this.rightNeighbor = msg.getTarget();
 				
-				DhtNode deliverDataTo = null;
-				int deliverToId = 0;
-				
-				if(dist < dist2) {
-					deliverDataTo = this;
-					deliverToId = this.id;
-				}
-				else { 
-					deliverDataTo = this.leftNeighbor;
-					deliverToId = this.leftNeighbor.getId();
-				}
+				System.out.println(prefixMsg + "Change Right Node to " + this.rightNeighbor.getUid());
 				
 				
-				System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
-				
-				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-	    		addData.setTarget(deliverDataTo);
-				addData.setRemaining(3);
-	    		addData.setId(msg.getId());
-	        	this.send(addData, Network.get(deliverToId));
-	        	
-	        	if(msg.getSenders().size() > 4) {
-	        		
-	        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", deliverDataTo);
-	        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
-	        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
-	        	}
-	        	
 				break;
-				
 			}
-			
-			if(msg.getId() == this.uid) {
+			case DELIVER: {
 				
-				System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
+				if(msg.getSenders().size() > Initializer.getNodeNb()) {
+					System.out.println(prefixMsg + " Timed out");
+					break;
+				} 
 				
-				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-	    		addData.setTarget(this);
-				addData.setRemaining(3);
-	    		addData.setId(msg.getId());
-	        	this.send(addData, getMyNode());
-	        	
-	        	if(msg.getSenders().size() > 3) {
-	        		
-	        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", this);
-	        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
-	        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
-	        	}
-				
-			} else {
-				
-				DhtNode deliverTo = null;
-				int deliverToId = 0;
-				
-				if(this.rightNeighbor.getUid() == msg.getId()) {
-					deliverTo = this.rightNeighbor;
-					deliverToId = this.rightNeighbor.getId();
-				}
-				else if(this.leftNeighbor.getUid() == msg.getId()) {
-					deliverTo = this.leftNeighbor;
-					deliverToId = this.leftNeighbor.getId();
-				}
-				else {
+				if((msg.getId() > this.uid && msg.getId() < this.rightNeighbor.getUid()) || (this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid)) {
 					
-					for(DhtNode node: this.rootingTable.keySet()) {
-						if(node.getUid() == msg.getId()) {
-							deliverTo = node;
-							deliverToId = this.rootingTable.get(node);
-							break;
-						}
+					int dist = Math.abs(msg.getId() - this.getUid());
+					int dist2 = Math.abs(msg.getId() - this.rightNeighbor.getUid());
+					
+					DhtNode deliverDataTo = null;
+					int deliverToId;
+					
+					if(dist < dist2) {
+						deliverDataTo = this;
+						deliverToId = this.id;
+					}
+					else { 
+						deliverDataTo = this.rightNeighbor;
+						deliverToId = this.rightNeighbor.getId();
 					}
 					
-					double diff = Double.POSITIVE_INFINITY;
+					System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
 					
-					for(DhtNode node : this.rootingTable.keySet()) {
-						
-						if(Math.abs(msg.getId() - node.getUid()) < diff) {
-							diff = Math.abs(msg.getId() - node.getUid());
-							deliverTo = node;
-							deliverToId = this.rootingTable.get(node);
-						}
-						
+					Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
+		    		addData.setTarget(deliverDataTo);
+					addData.setRemaining(3);
+		    		addData.setId(msg.getId());
+		        	this.send(addData, Network.get(deliverToId));
+		        	
+		        	if(msg.getSenders().size() > 4) {
+		        		
+		        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", deliverDataTo);
+		        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
+		        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
+		        	}
+		        	
+					break;
+					
+				}
+				if((msg.getId() < this.uid && msg.getId() > this.leftNeighbor.getUid()) || (this.leftNeighbor.getUid() > this.uid && msg.getId() < this.uid)) {
+					
+					int dist = Math.abs(msg.getId() - this.getUid());
+					int dist2 = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+					
+					DhtNode deliverDataTo = null;
+					int deliverToId = 0;
+					
+					if(dist < dist2) {
+						deliverDataTo = this;
+						deliverToId = this.id;
 					}
-					
-					if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
-						deliverTo = this.leftNeighbor;
+					else { 
+						deliverDataTo = this.leftNeighbor;
 						deliverToId = this.leftNeighbor.getId();
-						diff = Math.abs(msg.getId() - this.leftNeighbor.getUid());
 					}
-					if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
+					
+					
+					System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
+					
+					Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
+		    		addData.setTarget(deliverDataTo);
+					addData.setRemaining(3);
+		    		addData.setId(msg.getId());
+		        	this.send(addData, Network.get(deliverToId));
+		        	
+		        	if(msg.getSenders().size() > 4) {
+		        		
+		        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", deliverDataTo);
+		        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
+		        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
+		        	}
+		        	
+					break;
+					
+				}
+				
+				if(msg.getId() == this.uid) {
+					
+					System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
+					
+					Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
+		    		addData.setTarget(this);
+					addData.setRemaining(3);
+		    		addData.setId(msg.getId());
+		        	this.send(addData, getMyNode());
+		        	
+		        	if(msg.getSenders().size() > 3) {
+		        		
+		        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", this);
+		        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
+		        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
+		        	}
+					
+				} else {
+					
+					DhtNode deliverTo = null;
+					int deliverToId = 0;
+					
+					if(this.rightNeighbor.getUid() == msg.getId()) {
 						deliverTo = this.rightNeighbor;
 						deliverToId = this.rightNeighbor.getId();
-						diff = Math.abs(msg.getId() - this.rightNeighbor.getUid());
+					}
+					else if(this.leftNeighbor.getUid() == msg.getId()) {
+						deliverTo = this.leftNeighbor;
+						deliverToId = this.leftNeighbor.getId();
+					}
+					else {
+						
+						for(DhtNode node: this.rootingTable.keySet()) {
+							if(node.getUid() == msg.getId()) {
+								deliverTo = node;
+								deliverToId = this.rootingTable.get(node);
+								break;
+							}
+						}
+						
+						double diff = Double.POSITIVE_INFINITY;
+						
+						for(DhtNode node : this.rootingTable.keySet()) {
+							
+							if(Math.abs(msg.getId() - node.getUid()) < diff) {
+								diff = Math.abs(msg.getId() - node.getUid());
+								deliverTo = node;
+								deliverToId = this.rootingTable.get(node);
+							}
+							
+						}
+						
+						if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
+							deliverTo = this.leftNeighbor;
+							deliverToId = this.leftNeighbor.getId();
+							diff = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+						}
+						if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
+							deliverTo = this.rightNeighbor;
+							deliverToId = this.rightNeighbor.getId();
+							diff = Math.abs(msg.getId() - this.rightNeighbor.getUid());
+						}
+						
+						
 					}
 					
 					
+					this.send(msg, Network.get(deliverToId));
+					System.out.println(prefixMsg + "Delivering message to " + deliverTo.getUid() + " {id = " + msg.getId() + "}");	
+					
 				}
 				
+				break;
+			}
+			case CREATE_LINK: {
 				
-				this.send(msg, Network.get(deliverToId));
-				System.out.println(prefixMsg + "Delivering message to " + deliverTo.getUid() + " {id = " + msg.getId() + "}");	
+				this.rootingTable.put(msg.getTarget(), msg.getTarget().getId());
+				System.out.println(prefixMsg + "Creating link between " + msg.getTarget().getUid() + " and " + this.uid);	
+				break;
+				
+			}
+			case REMOVE_LINK: {
+				
+				this.rootingTable.remove(msg.getTarget());
+				System.out.println(prefixMsg + "Removing link between " + msg.getTarget().getUid() + " and " + this.uid);	
+				break;
+				
+			}
+			case ADD_DATA: {
+				
+				checkRemaining(msg);
+				
+				if(this.dataInfos.keySet().contains(msg.getTarget())) {
+		    		Map<Integer, Message> currentInfos = this.dataInfos.get(msg.getTarget());
+		    		currentInfos.put(msg.getId(), msg.data2Save());
+		    		this.dataInfos.put(msg.getTarget(), currentInfos);
+		    		
+		    	} else {
+		    		Map<Integer, Message> newInfos = new HashMap<>();
+		    		newInfos.put(msg.getId(), msg.data2Save());
+		    		this.dataInfos.put(msg.getTarget(), newInfos);
+		    	}
+				
+				break;
+				
+			}
+			case COLLECT_DATA: {
+				
+				checkRemaining(msg);
+				
+				if(this.dataInfos.get(this) != null) {
+					Map<Integer, Message> data = this.dataInfos.get(this);
+					Message addAllDataMsg = new Message(MessageType.ADD_ALL_DATA, data);
+					addAllDataMsg.setTarget(this);
+					addAllDataMsg.setRemaining(3);
+					this.send(addAllDataMsg, Network.get(msg.getTarget().getId()));
+					
+					System.out.println("[Collect Data] from " + msg.getFirstSender().getUid() + " to " + this.uid  + " -> Send me your data");	
+				} 
+				
+				break;
+				
+			}
+			case REMOVE_DATA: {
+				
+				checkRemaining(msg);
+				
+		    	this.dataInfos.remove(msg.getTarget());
+		    	
+		    	if(this != msg.getTarget()) {
+		    		
+			    	Map<Integer, Message> data = this.dataInfos.get(this);
+			    	
+			    	if(data != null) {
+			    		Message addAllDataMsg = new Message(MessageType.ADD_ALL_DATA, data);
+				    	addAllDataMsg.setTarget(this);
+				    	this.send(addAllDataMsg, getMyNode());
+			    	}
+	
+		    	}
+		    	
+				break;
+				
+			}
+			case ADD_ALL_DATA: {
+				
+				Map<Integer, Message> data = (Map<Integer, Message>) msg.getContent();
+				
+				checkRemaining(msg);
+				
+				if(this.dataInfos.keySet().contains(msg.getTarget())) {
+					
+					for(int i : data.keySet()) {
+						
+						if(!this.dataInfos.get(msg.getTarget()).keySet().contains(i)) {
+							Map<Integer, Message> currentInfos = this.dataInfos.get(msg.getTarget());
+							currentInfos.put(i, data.get(i));
+							this.dataInfos.put(msg.getTarget(), currentInfos);
+						}	
+					}
+		    	} else {
+		    		
+		    		this.dataInfos.put(msg.getTarget(), data);
+		    		
+		    	}
+				
+				break;
+				
+			}
+			case SHOW_TREE: {
+				
+				System.out.println(getTreeUid("Tree :\n", this, this));
+				System.out.println(getTreeNode("", this, this));
+				break;
 				
 			}
 			
-			break;
-		}
-		case CREATE_LINK: {
-			
-			this.rootingTable.put(msg.getTarget(), msg.getTarget().getId());
-			System.out.println(prefixMsg + "Creating link between " + msg.getTarget().getUid() + " and " + this.uid);	
-			break;
-			
-		}
-		case REMOVE_LINK: {
-			
-			this.rootingTable.remove(msg.getTarget());
-			System.out.println(prefixMsg + "Removing link between " + msg.getTarget().getUid() + " and " + this.uid);	
-			break;
-			
-		}
-		case ADD_DATA: {
-			
-			checkRemaining(msg);
-			
-			if(this.dataInfos.keySet().contains(msg.getTarget())) {
-	    		Map<Integer, Message> currentInfos = this.dataInfos.get(msg.getTarget());
-	    		currentInfos.put(msg.getId(), msg.data2Save());
-	    		this.dataInfos.put(msg.getTarget(), currentInfos);
-	    		
-	    	} else {
-	    		Map<Integer, Message> newInfos = new HashMap<>();
-	    		newInfos.put(msg.getId(), msg.data2Save());
-	    		this.dataInfos.put(msg.getTarget(), newInfos);
-	    	}
-			
-			break;
-			
-		}
-		case COLLECT_DATA: {
-			
-			checkRemaining(msg);
-			
-			if(this.dataInfos.get(this) != null) {
-				Map<Integer, Message> data = this.dataInfos.get(this);
-				Message addAllDataMsg = new Message(MessageType.ADD_ALL_DATA, data);
-				addAllDataMsg.setTarget(this);
-				addAllDataMsg.setRemaining(3);
-				this.send(addAllDataMsg, Network.get(msg.getTarget().getId()));
-				
-				System.out.println("[Collect Data] from " + msg.getFirstSender().getUid() + " to " + this.uid  + " -> Send me your data");	
-			} 
-			
-			break;
-			
-		}
-		case REMOVE_DATA: {
-			
-			checkRemaining(msg);
-			
-	    	this.dataInfos.remove(msg.getTarget());
-	    	
-	    	if(this != msg.getTarget()) {
-	    		
-		    	Map<Integer, Message> data = this.dataInfos.get(this);
-		    	
-		    	if(data != null) {
-		    		Message addAllDataMsg = new Message(MessageType.ADD_ALL_DATA, data);
-			    	addAllDataMsg.setTarget(this);
-			    	this.send(addAllDataMsg, getMyNode());
-		    	}
-
-	    	}
-	    	
-			break;
-			
-		}
-		case ADD_ALL_DATA: {
-			
-			Map<Integer, Message> data = (Map<Integer, Message>) msg.getContent();
-			
-			checkRemaining(msg);
-			
-			if(this.dataInfos.keySet().contains(msg.getTarget())) {
-				
-				for(int i : data.keySet()) {
-					
-					if(!this.dataInfos.get(msg.getTarget()).keySet().contains(i)) {
-						Map<Integer, Message> currentInfos = this.dataInfos.get(msg.getTarget());
-						currentInfos.put(i, data.get(i));
-						this.dataInfos.put(msg.getTarget(), currentInfos);
-					}	
-				}
-	    	} else {
-	    		
-	    		this.dataInfos.put(msg.getTarget(), data);
-	    		
-	    	}
-			
-			break;
-			
-		}
-		case SHOW_TREE: {
-			
-			System.out.println(getTree("Tree :\n", this, this));
-			System.out.println(getTreeNode("", this, this));
-			break;
-			
-		}
-		
-		default:
-			throw new IllegalArgumentException("Unexpected value");
-		}
-    	
-    	/*if(!msg.isType(MessageType.ADD_DATA)) {
-    		Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-    		addData.setRemaining(3);
-    		addData.setId(Controller.generateNewDataId());
-        	this.send(addData, getMyNode());
-    	}*/
+			default:
+				throw new IllegalArgumentException("Unexpected value");
+			}
     	
     }
     
+    /*
+     * Fonction permettant d'afficher les informations d'un noeud
+     * Ici on affiche les données que le noeud à sauvegarder
+     */
     public void showInfos() {
     	
     	System.err.println("\n\n >>>>> Data Informations for " + this + " {uid : " + this.uid +  "} <<<<<");
@@ -524,6 +556,9 @@ public class DhtNode implements EDProtocol {
     	
     }
     
+    /*
+     * Fonction permettant de check si le message doit être relayé encore une fois
+     */
     private void checkRemaining(Message msg) {
     	
     	if(msg.getRemaining() > 0) {
@@ -547,13 +582,16 @@ public class DhtNode implements EDProtocol {
     	
     }
     
-    private String getTree(String message, DhtNode startingNode, DhtNode currentNode) {
+    /*
+     * Retourne l'arbre des identifiants uniques des noeuds sous forme de chaîne de caractères
+     */
+    private String getTreeUid(String message, DhtNode startingNode, DhtNode currentNode) {
     	
     	message += " " + currentNode.getUid() + " -> ";
     	
 		if(!currentNode.getRightNeighor().equals(startingNode)) {
 			
-			return getTree(message, startingNode, currentNode.getRightNeighor());
+			return getTreeUid(message, startingNode, currentNode.getRightNeighor());
 			
 		} 
 		
@@ -561,6 +599,9 @@ public class DhtNode implements EDProtocol {
     	
     }
     
+    /*
+     * Retourne l'arbre des numéros des noeuds sous forme de chaîne de caractères
+     */
     private String getTreeNode(String message, DhtNode startingNode, DhtNode currentNode) {
     	
     	message += " Node " + currentNode.getId() + " -> ";
@@ -575,38 +616,37 @@ public class DhtNode implements EDProtocol {
     	
     }
 
-    // retourne le noeud courant
-    
+    /*
+     * Retourne le noeud courant
+     */
     private Node getMyNode() {
     	return Network.get(this.id);
     }
 
-    public String toString() {
-    	return "Node "+ this.id;
-    }
-    
-    /**
-     * Fonction pour récupérer tous les voisins
-     * 
+    /*
+     * Retourne le noeud courant sous format String
      */
-    public List<DhtNode> getAllNeighors(){
-    	
-    	List<DhtNode> allNeighbors = new ArrayList<>();
-    	allNeighbors.add(this.rightNeighbor);
-    	allNeighbors.add(this.leftNeighbor);
-    	
-    	return allNeighbors;
-    	
+    public String toString() {
+    	return "Node " + this.id;
     }
     
+    /*
+     * Retourne le nombre correspondant au noeud actuel
+     */
     public Integer getId() {
   		return this.id;
   	}
     
+    /*
+     * Retourne l'identifiant unique
+     */
     public Integer getUid() {
   		return this.uid;
   	}
     
+    /*
+     * Définir l'uid
+     */
     public void setNodeUid(int nodeUid) {
   		this.uid = nodeUid;
   	}
