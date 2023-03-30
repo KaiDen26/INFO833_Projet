@@ -196,6 +196,13 @@ public class DhtNode implements EDProtocol {
 			
 			System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid() + " | Change Right Node to " + this.rightNeighbor.getUid());
 			
+			Message collectRightMsg = new Message(MessageType.COLLECT_DATA, "Send me your data !", this);
+			collectRightMsg.setRemaining(3);
+			this.send(collectRightMsg, Network.get(this.rightNeighbor.getId()));
+			Message collectLeftMsg = new Message(MessageType.COLLECT_DATA, "Send me your data !", this);
+			collectLeftMsg.setRemaining(3);
+			this.send(collectLeftMsg, Network.get(this.leftNeighbor.getId()));
+			
 			break;
 		}
 		case PLACE_LEFT: {
@@ -222,14 +229,6 @@ public class DhtNode implements EDProtocol {
 				break;
 			} 
 			
-			/*if(this.leftNeighbor.getUid() > this.uid && msg.getId() < this.uid) {
-				
-			}
-			
-			if(this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid) {
-				
-			} */
-			
 			if((msg.getId() > this.uid && msg.getId() < this.rightNeighbor.getUid()) || (this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid)) {
 				
 				int dist = Math.abs(msg.getId() - this.getUid());
@@ -240,7 +239,7 @@ public class DhtNode implements EDProtocol {
 				if(dist < dist2) {
 					deliverDataTo = this;
 				}
-				else {
+				else { 
 					deliverDataTo = this.rightNeighbor;
 				}
 				
@@ -285,7 +284,7 @@ public class DhtNode implements EDProtocol {
 	    		addData.setId(msg.getId());
 	        	this.send(addData, getMyNode());
 	        	
-	        	if(msg.getSenders().size() > 3) {
+	        	if(msg.getSenders().size() > 4) {
 	        		
 	        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", deliverDataTo);
 	        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
@@ -295,6 +294,8 @@ public class DhtNode implements EDProtocol {
 				break;
 				
 			}
+			
+			double diff = Double.POSITIVE_INFINITY;
 			
 			if(msg.getId() == this.uid) {
 				
@@ -336,8 +337,6 @@ public class DhtNode implements EDProtocol {
 						}
 					}
 					
-					double diff = Double.POSITIVE_INFINITY;
-					
 					for(DhtNode node : this.rootingTable.keySet()) {
 						
 						if(Math.abs(msg.getId() - node.getUid()) < diff) {
@@ -348,19 +347,17 @@ public class DhtNode implements EDProtocol {
 						
 					}
 					
-					if(msg.getId() < this.uid) {
-						if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
-							deliverTo = this.leftNeighbor;
-							deliverToId = this.leftNeighbor.getId();
-						}
-					}
-					else if(msg.getId() > this.uid) {
-						if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
-							deliverTo = this.rightNeighbor;
-							deliverToId = this.rightNeighbor.getId();
-						}
-					}
-					
+				}
+				
+				if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
+					deliverTo = this.leftNeighbor;
+					deliverToId = this.leftNeighbor.getId();
+					diff = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+				}
+				if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
+					deliverTo = this.rightNeighbor;
+					deliverToId = this.rightNeighbor.getId();
+					diff = Math.abs(msg.getId() - this.rightNeighbor.getUid());
 				}
 				
 				this.send(msg, Network.get(deliverToId));
@@ -386,26 +383,7 @@ public class DhtNode implements EDProtocol {
 		}
 		case ADD_DATA: {
 			
-			if(msg.getRemaining() > 0) {
-				
-				msg.decreaseRemaining();
-				
-				if(!msg.getSenders().contains(this.leftNeighbor) && !msg.getSenders().contains(this.rightNeighbor)) {
-					this.send(msg, Network.get(this.rightNeighbor.getId()));
-					this.send(msg, Network.get(this.leftNeighbor.getId()));
-				}
-				else if(msg.getSenders().contains(this.leftNeighbor)) {
-					
-					this.send(msg, Network.get(this.rightNeighbor.getId()));
-					
-				} else {
-					
-					this.send(msg, Network.get(this.leftNeighbor.getId()));
-					
-				}
-				
-				
-			}
+			checkRemaining(msg);
 			
 			if(this.dataInfos.keySet().contains(msg.getTarget())) {
 	    		Map<Integer, Message> currentInfos = this.dataInfos.get(msg.getTarget());
@@ -421,35 +399,35 @@ public class DhtNode implements EDProtocol {
 			break;
 			
 		}
+		case COLLECT_DATA: {
+			
+			checkRemaining(msg);
+			
+			if(this.dataInfos.get(this) != null) {
+				Map<Integer, Message> data = this.dataInfos.get(this);
+				Message addAllDataMsg = new Message(MessageType.ADD_ALL_DATA, data);
+				addAllDataMsg.setTarget(this);
+				addAllDataMsg.setRemaining(3);
+				this.send(addAllDataMsg, Network.get(msg.getTarget().getId()));
+				
+				System.out.println("[Collect Data] from " + msg.getFirstSender().getUid() + " to " + this.uid  + " -> Send me your data");	
+			} 
+			
+			break;
+			
+		}
 		case REMOVE_DATA: {
 			
-			if(msg.getRemaining() > 0) {
-				
-				msg.decreaseRemaining();
-				
-				if(!msg.getSenders().contains(this.leftNeighbor) && !msg.getSenders().contains(this.rightNeighbor)) {
-					this.send(msg, Network.get(this.rightNeighbor.getId()));
-					this.send(msg, Network.get(this.leftNeighbor.getId()));
-				}
-				else if(msg.getSenders().contains(this.leftNeighbor)) {
-					
-					this.send(msg, Network.get(this.rightNeighbor.getId()));
-					
-				} else {
-					
-					this.send(msg, Network.get(this.leftNeighbor.getId()));
-					
-				}
-			}
+			checkRemaining(msg);
 			
 	    	this.dataInfos.remove(msg.getTarget());
 	    	
 	    	if(this != msg.getTarget()) {
 	    		
-		    	Map<Integer, Message> Data = this.dataInfos.get(this);
+		    	Map<Integer, Message> data = this.dataInfos.get(this);
 		    	
-		    	if(Data != null) {
-		    		Message addAllDataMsg = new Message(MessageType.ADD_ALL_DATA, Data);
+		    	if(data != null) {
+		    		Message addAllDataMsg = new Message(MessageType.ADD_ALL_DATA, data);
 			    	addAllDataMsg.setTarget(this);
 			    	this.send(addAllDataMsg, getMyNode());
 		    	}
@@ -463,26 +441,7 @@ public class DhtNode implements EDProtocol {
 			
 			Map<Integer, Message> data = (Map<Integer, Message>) msg.getContent();
 			
-			if(msg.getRemaining() > 0) {
-				
-				msg.decreaseRemaining();
-				
-				if(!msg.getSenders().contains(this.leftNeighbor) && !msg.getSenders().contains(this.rightNeighbor)) {
-					this.send(msg, Network.get(this.rightNeighbor.getId()));
-					this.send(msg, Network.get(this.leftNeighbor.getId()));
-				}
-				else if(msg.getSenders().contains(this.leftNeighbor)) {
-					
-					this.send(msg, Network.get(this.rightNeighbor.getId()));
-					
-				} else {
-					
-					this.send(msg, Network.get(this.leftNeighbor.getId()));
-					
-				}
-				
-				
-			}
+			checkRemaining(msg);
 			
 			if(this.dataInfos.keySet().contains(msg.getTarget())) {
 				
@@ -541,6 +500,31 @@ public class DhtNode implements EDProtocol {
     		
     		
     	}
+    	
+    	System.out.println("\n");
+    	
+    }
+    
+    private void checkRemaining(Message msg) {
+    	
+    	if(msg.getRemaining() > 0) {
+			
+			msg.decreaseRemaining();
+			
+			if(!msg.getSenders().contains(this.leftNeighbor) && !msg.getSenders().contains(this.rightNeighbor)) {
+				this.send(msg, Network.get(this.rightNeighbor.getId()));
+				this.send(msg, Network.get(this.leftNeighbor.getId()));
+			}
+			else if(msg.getSenders().contains(this.leftNeighbor)) {
+				
+				this.send(msg, Network.get(this.rightNeighbor.getId()));
+				
+			} else {
+				
+				this.send(msg, Network.get(this.leftNeighbor.getId()));
+				
+			}
+		}
     	
     }
     

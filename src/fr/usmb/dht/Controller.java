@@ -75,6 +75,8 @@ public class Controller implements peersim.core.Control{
 		Message joinMsg2 = new Message(MessageType.JOIN, "Joining the network !", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
 		this.steps.add(() -> sendMsg(node3, joinMsg2, Network.get(8)));
 		
+		this.steps.add(node3::showInfos);
+		
 		Message deliverMsg3 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
 		deliverMsg3.setId(generateNewDataId());
 		this.steps.add(() -> sendMsg(node2, deliverMsg3, Network.get(2)));
