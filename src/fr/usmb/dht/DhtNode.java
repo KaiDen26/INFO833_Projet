@@ -235,23 +235,26 @@ public class DhtNode implements EDProtocol {
 				int dist2 = Math.abs(msg.getId() - this.rightNeighbor.getUid());
 				
 				DhtNode deliverDataTo = null;
+				int deliverToId;
 				
 				if(dist < dist2) {
 					deliverDataTo = this;
+					deliverToId = this.id;
 				}
 				else { 
 					deliverDataTo = this.rightNeighbor;
+					deliverToId = this.rightNeighbor.getId();
 				}
 				
 				System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
 				
 				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-	    		addData.setTarget(this);
+	    		addData.setTarget(deliverDataTo);
 				addData.setRemaining(3);
 	    		addData.setId(msg.getId());
-	        	this.send(addData, getMyNode());
+	        	this.send(addData, Network.get(deliverToId));
 	        	
-	        	if(msg.getSenders().size() > 3) {
+	        	if(msg.getSenders().size() > 4) {
 	        		
 	        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", deliverDataTo);
 	        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
@@ -267,22 +270,25 @@ public class DhtNode implements EDProtocol {
 				int dist2 = Math.abs(msg.getId() - this.leftNeighbor.getUid());
 				
 				DhtNode deliverDataTo = null;
+				int deliverToId = 0;
 				
 				if(dist < dist2) {
 					deliverDataTo = this;
+					deliverToId = this.id;
 				}
-				else {
+				else { 
 					deliverDataTo = this.leftNeighbor;
+					deliverToId = this.leftNeighbor.getId();
 				}
 				
 				
 				System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
 				
 				Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-	    		addData.setTarget(this);
+	    		addData.setTarget(deliverDataTo);
 				addData.setRemaining(3);
 	    		addData.setId(msg.getId());
-	        	this.send(addData, getMyNode());
+	        	this.send(addData, Network.get(deliverToId));
 	        	
 	        	if(msg.getSenders().size() > 4) {
 	        		
@@ -294,8 +300,6 @@ public class DhtNode implements EDProtocol {
 				break;
 				
 			}
-			
-			double diff = Double.POSITIVE_INFINITY;
 			
 			if(msg.getId() == this.uid) {
 				
@@ -337,6 +341,8 @@ public class DhtNode implements EDProtocol {
 						}
 					}
 					
+					double diff = Double.POSITIVE_INFINITY;
+					
 					for(DhtNode node : this.rootingTable.keySet()) {
 						
 						if(Math.abs(msg.getId() - node.getUid()) < diff) {
@@ -347,18 +353,20 @@ public class DhtNode implements EDProtocol {
 						
 					}
 					
+					if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
+						deliverTo = this.leftNeighbor;
+						deliverToId = this.leftNeighbor.getId();
+						diff = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+					}
+					if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
+						deliverTo = this.rightNeighbor;
+						deliverToId = this.rightNeighbor.getId();
+						diff = Math.abs(msg.getId() - this.rightNeighbor.getUid());
+					}
+					
+					
 				}
 				
-				if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
-					deliverTo = this.leftNeighbor;
-					deliverToId = this.leftNeighbor.getId();
-					diff = Math.abs(msg.getId() - this.leftNeighbor.getUid());
-				}
-				if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
-					deliverTo = this.rightNeighbor;
-					deliverToId = this.rightNeighbor.getId();
-					diff = Math.abs(msg.getId() - this.rightNeighbor.getUid());
-				}
 				
 				this.send(msg, Network.get(deliverToId));
 				System.out.println(prefixMsg + "Delivering message to " + deliverTo.getUid() + " {id = " + msg.getId() + "}");	
@@ -465,6 +473,7 @@ public class DhtNode implements EDProtocol {
 		case SHOW_TREE: {
 			
 			System.out.println(getTree("Tree :\n", this, this));
+			System.out.println(getTreeNode("", this, this));
 			break;
 			
 		}
@@ -484,17 +493,17 @@ public class DhtNode implements EDProtocol {
     
     public void showInfos() {
     	
-    	System.err.println("\n\n >>>>> Data Informations for " + this + " <<<<<");
+    	System.err.println("\n\n >>>>> Data Informations for " + this + " {uid : " + this.uid +  "} <<<<<");
     	
     	for(DhtNode currentNode : this.dataInfos.keySet()) {
     		
-    		System.out.println("-------- " + currentNode + " --------");
+    		System.out.println("-------- " + currentNode + " {" + currentNode.getUid() + "} --------");
     		
     		for(int id : this.dataInfos.get(currentNode).keySet()) {
     			
     			Message message = this.dataInfos.get(currentNode).get(id);
     			
-    			System.out.println("{" + id + "} - " + message.toString() + " to " + message.getTarget() +" (" + message.getContent() + ")");
+    			System.out.println("{" + id + "} - " + message.getContent());
     			
     		}
     		
@@ -530,17 +539,27 @@ public class DhtNode implements EDProtocol {
     
     private String getTree(String message, DhtNode startingNode, DhtNode currentNode) {
     	
+    	message += " " + currentNode.getUid() + " -> ";
+    	
 		if(!currentNode.getRightNeighor().equals(startingNode)) {
-			
-			message += " " + currentNode.getUid() + " -> ";
 			
 			return getTree(message, startingNode, currentNode.getRightNeighor());
 			
-		} else {
+		} 
+		
+		return message;
+    	
+    }
+    
+    private String getTreeNode(String message, DhtNode startingNode, DhtNode currentNode) {
+    	
+    	message += " Node " + currentNode.getId() + " -> ";
+    	
+		if(!currentNode.getRightNeighor().equals(startingNode)) {
 			
-			message += " " + currentNode.getUid();
+			return getTreeNode(message, startingNode, currentNode.getRightNeighor());
 			
-		}
+		} 
 		
 		return message;
     	

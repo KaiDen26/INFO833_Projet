@@ -93,6 +93,8 @@ public class Controller implements peersim.core.Control{
 		
 		this.steps.add(node3::showInfos);
 		
+		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), treeMsg, Network.get(0)));
+		
 	}
 	 
 	public void sendMsg(DhtNode node, Message msg, Node dest) {
@@ -111,9 +113,9 @@ public class Controller implements peersim.core.Control{
 	}
 
 	public int generateNewDataId() {
-		int msgUid = new Random().nextInt(Initializer.getNodeNb() * 10);
+		int msgUid = new Random().nextInt(Initializer.getNodeNb()  * 10);
 		while (msgUids.contains(msgUid)) {
-			msgUid = new Random().nextInt(Initializer.getNodeNb() * 10);
+			msgUid = new Random().nextInt(Initializer.getNodeNb()  * 10);
 		}
 		msgUids.add(msgUid);
 		return msgUid;
