@@ -545,7 +545,11 @@ public class DhtNode implements EDProtocol {
 			
 			return getTree(message, startingNode, currentNode.getRightNeighor());
 			
-		} 
+		}  else {
+			
+			message += " " + currentNode.getUid() + " -> ";
+		
+		}
 		
 		return message;
     	
@@ -559,7 +563,9 @@ public class DhtNode implements EDProtocol {
 			
 			return getTreeNode(message, startingNode, currentNode.getRightNeighor());
 			
-		} 
+		} else {
+			message += " Node " + currentNode.getId() + " -> ";
+		}
 		
 		return message;
     	
