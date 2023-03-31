@@ -102,7 +102,6 @@ Dans l'image suivante, nous observons les logs des actions appliquées à la DHT
 
 
 Dans l'image suivante, nous observons l'anneau comprenant les noeuds de la DHT ainsi que les jointures entre noeuds (Utilisation de la librairie JavaFx)
-A noter que cet anneau ne correspond pas aux logs ci-dessus
 
 ![ring](https://user-images.githubusercontent.com/77977775/229211756-56fc68ed-69a7-44b1-b368-6d0b42a7c7f1.png)
 
