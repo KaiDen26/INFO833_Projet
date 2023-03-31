@@ -72,11 +72,11 @@ public class Controller implements peersim.core.Control{
 		
 		DhtNode node2 = (DhtNode) Network.get(2).getProtocol(this.dhtPid);
 		
-		Message deliverMsg = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		Message deliverMsg = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?");
 		deliverMsg.setId(generateNewDataId());
 		this.steps.add(() -> sendMsg(node2, deliverMsg, Network.get(2)));
 		
-		Message deliverMsg2 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		Message deliverMsg2 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?");
 		deliverMsg2.setId(generateNewDataId());
 		this.steps.add(() -> sendMsg(node2, deliverMsg2, Network.get(2)));
 		
@@ -92,13 +92,13 @@ public class Controller implements peersim.core.Control{
 		
 		this.steps.add(node3::showInfos);
 		
-		Message deliverMsg3 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
+		Message deliverMsg3 = new Message(MessageType.DELIVER, "Hello dude, wanna meet ?");
 		deliverMsg3.setId(generateNewDataId());
 		this.steps.add(() -> sendMsg(node2, deliverMsg3, Network.get(2)));
 		
 		
-		Message deliverMsg4 = new Message(MessageType.DELIVER, 8000.54, (DhtNode) Network.get(4).getProtocol(this.dhtPid));
-		deliverMsg4.setId(generateNewDataId());
+		Message deliverMsg4 = new Message(MessageType.DELIVER, 8000.54);
+		deliverMsg4.setId(50);
 		this.steps.add(() -> sendMsg(node2, deliverMsg4, Network.get(2)));
 		
 		Message leaving2 = new Message(MessageType.LEAVE, "Leaving", (DhtNode) Network.get(3).getProtocol(this.dhtPid));
@@ -107,8 +107,24 @@ public class Controller implements peersim.core.Control{
 		this.steps.add(node2::showInfos);
 		
 		this.steps.add(node3::showInfos);
+		DhtNode node4 = (DhtNode) Network.get(4).getProtocol(this.dhtPid);
+		this.steps.add(node4::showInfos);
+		DhtNode node5 = (DhtNode) Network.get(5).getProtocol(this.dhtPid);
+		this.steps.add(node5::showInfos);
+		DhtNode node6 = (DhtNode) Network.get(6).getProtocol(this.dhtPid);
+		this.steps.add(node6::showInfos);
+		DhtNode node7 = (DhtNode) Network.get(7).getProtocol(this.dhtPid);
+		this.steps.add(node7::showInfos);
+		DhtNode node8 = (DhtNode) Network.get(8).getProtocol(this.dhtPid);
+		this.steps.add(node8::showInfos);
+		DhtNode node9 = (DhtNode) Network.get(9).getProtocol(this.dhtPid);
+		this.steps.add(node9::showInfos);
 		
 		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), ringMsg, Network.get(0)));
+		
+		Message getMsg = new Message(MessageType.GET, "Give me the data !");
+		getMsg.setId(50);
+		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), getMsg, Network.get(0)));
 		
 	}
 	 

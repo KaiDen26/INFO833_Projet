@@ -46,6 +46,11 @@ public class Message {
     private int id;
     
     /*
+     * Boolean permettant de savoir si la donnée est à sauvegarder
+     */
+	private boolean isSavable = true;
+    
+    /*
      * Constructeur classique
      */
 	Message(MessageType type, Object content) {
@@ -196,10 +201,23 @@ public class Message {
      * Retourne l'objet message sous format String
      */
     public String toString() {
-    	
     	return "[" + this.type.getDescription() + "] from " + this.senders.get(0) + " (Uid : " + this.senders.get(0).getUid()+ ")";
-
     }
+    
+    /*
+     * Définir si la donnée est à sauvegarder
+     */
+    public void setSavable(boolean isSavable) {
+    	this.isSavable = isSavable;
+    }
+    
+    /*
+     * Retourne un boolean selon si la donnée est à sauvegarder
+     */
+    public Boolean isSavable() {
+    	return this.isSavable;
+    }
+    
 
     
 }

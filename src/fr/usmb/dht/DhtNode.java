@@ -197,7 +197,6 @@ public class DhtNode implements EDProtocol {
 						this.leftNeighbor = msg.getTarget();
 						System.out.println(prefixMsg + "Change Left Node to " + this.leftNeighbor.getUid());
 						
-						
 					} else {
 						
 						// Sinon on fait passer le message de type join au noeud de gauche
@@ -298,7 +297,11 @@ public class DhtNode implements EDProtocol {
 					
 					Object[] values = getBestDiff(msg, this.rightNeighbor);
 					
-		        	addData(prefixMsg, (DhtNode) values[0], (int) values[1], msg);
+					if(msg.isSavable()) {
+						addData(prefixMsg, (DhtNode) values[0], (int) values[1], msg);
+					} else {
+						System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
+					}
 		        	
 		        	checkCreateLink(msg);
 		        	
@@ -313,7 +316,11 @@ public class DhtNode implements EDProtocol {
 					
 					Object[] values = getBestDiff(msg, this.leftNeighbor);
 					
-		        	addData(prefixMsg, (DhtNode) values[0], (int) values[1], msg);
+					if(msg.isSavable()) {
+						addData(prefixMsg, (DhtNode) values[0], (int) values[1], msg);
+					} else {
+						System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
+					}
 		        	
 		        	checkCreateLink(msg);
 		        	
@@ -325,11 +332,190 @@ public class DhtNode implements EDProtocol {
 				// On regarde si l'id de la donnée est égale à l'uid du noeud courant
 				if(msg.getId() == this.uid) {
 					
-					System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
+					if(msg.isSavable()) {
+						addData(prefixMsg, this, this.id, msg);
+					} else {
+						System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
+					}
 					
-		        	addData(prefixMsg, this, this.id, msg);
-		        	
 		        	checkCreateLink(msg);
+					
+				} else {
+					
+					// A partir d'ici on s'intéresse au relay du message avec tout le fonctionnement derrière
+					
+					DhtNode deliverDataTo = null;
+					int deliverToId = -1;
+					
+					// On initialise la variable différence comme infiny pour que forcément un résultat soit inférieur
+					double diff = Double.POSITIVE_INFINITY;
+					
+					
+					// Ici on parcourt notre table de routage
+					for(DhtNode node : this.routingTable.keySet()) {
+						
+						// Si l'uid exacte correspondant à l'id de la donnée a été trouvé
+						if(node.getUid() == msg.getId()) {
+							deliverDataTo = node;
+							deliverToId = this.routingTable.get(node);
+							break;
+						
+						// Sinon on continue de parcourir la table pour essayer de trouver la jointure avec la plus petite différence entre l'id de la donnée et l'uid du noeud
+						} else {
+							if(Math.abs(msg.getId() - node.getUid()) < diff) {
+								diff = Math.abs(msg.getId() - node.getUid());
+								deliverDataTo = node;
+								deliverToId = this.routingTable.get(node);
+							}
+						}
+						
+					}
+					
+					// A la toute fin, nous vérifions si au final la différence l'id de la donnée et l'uid d'un noeud n'est pas plus faible pour les voisins
+
+					// Ici nous checkons pour le voisin de gauche
+					if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
+						deliverDataTo = this.leftNeighbor;
+						deliverToId = this.leftNeighbor.getId();
+						diff = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+					}
+					// Ici nous checkons pour le voisin de droite
+					if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
+						deliverDataTo = this.rightNeighbor;
+						deliverToId = this.rightNeighbor.getId();
+						diff = Math.abs(msg.getId() - this.rightNeighbor.getUid());
+					}
+						
+					
+					// On relaye le message vers la cible trouvée
+					this.send(msg, Network.get(deliverToId));
+					System.out.println(prefixMsg + "Delivering message to " + deliverDataTo.getUid() + " {id = " + msg.getId() + "}");	
+					
+				}
+				
+				break;
+			}
+			// Ici on s'intéresse aux messages de type get, lorsqu'un noeud veut récupérer de la donnée
+			case GET: {
+				
+				// Sécurité lorsqu'un noeud n'est pas trouvé
+				// Ne devrait jamais être appelé mais nous gardons cela comme sécurité
+				if(msg.getSenders().size() > Initializer.getNodeNb()) {
+					System.out.println(prefixMsg + " Timed out");
+					break;
+				} 
+				
+				// Les 2 blocs de conditions suivants sont réalisés lorsque le message est arrivé à sa destination
+				
+				
+				// On regarde si l'id de la donnée est strictement supérieur à l'uid du noeud courant ET que l'id de la donnée est strictement inférieur à l'uid du noeud de droite -> Donc la donnée se stocke soit sur le noeud courant soit sur le noeud de droite
+				// OU ALORS
+				// On regarde si l'uid du voisin de droite est strictement inférieur à l'uid du noeud courant ET que le l'id de la donnée est strictement supérieur à l'uid du noeud courant (Cette condition sert à savoir si le noeud courant est en fin d'anneau numériquement parlant)
+				if((msg.getId() > this.uid && msg.getId() < this.rightNeighbor.getUid()) || (this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid)) {
+					
+		        	DhtNode node = (DhtNode) getBestDiff(msg, this.rightNeighbor)[0];
+		        	
+		        	int resultId = -1;
+		        	
+		        	// On vérifie que dataInfos contient des informations
+		        	if(node.dataInfos != null && node.dataInfos.get(node) != null) {
+		        		// On parcourt les id compris dans les informations d'un noeud
+		        		for(int idTarget : node.dataInfos.get(node).keySet()) {
+			        		
+			        		// Si la donnée est trouvée on définit l'id cible
+			        		if(idTarget == msg.getId()) {
+			        			resultId = idTarget;
+					        	break;
+			        		}
+			        		
+			        	}
+		        	}
+		        	Message deliverGetDataMsg;
+		        	
+		        	// Si la donnée n'est pas trouvée
+		        	if(resultId == -1) {
+		        		deliverGetDataMsg = new Message(MessageType.DELIVER, "Could not find the data");
+		        	} else {
+		        		deliverGetDataMsg = new Message(MessageType.DELIVER, node.dataInfos.get(node).get(resultId).getContent());
+		        	}
+		        	
+		        	deliverGetDataMsg.setSavable(false);
+		        	deliverGetDataMsg.setId(msg.getFirstSender().getUid());
+		        	this.send(deliverGetDataMsg, getMyNode());
+					break;
+					
+				}
+				
+				// On regarde si l'id de la donnée est strictement inférieur à l'uid du noeud courant ET que l'id de la donnée est strictement supérieur à l'uid du noeud de gauche -> Donc la donnée se stocke soit sur le noeud courant soit sur le noeud de gauche
+				// OU ALORS
+				// On regarde si l'uid du voisin de gauche est strictement supérieur à l'uid du noeud courant ET que le l'id de la donnée est strictement inférieur à l'uid du noeud courant (Cette condition sert à savoir si le noeud courant est en début d'anneau numériquement parlant)
+				if((msg.getId() < this.uid && msg.getId() > this.leftNeighbor.getUid()) || (this.leftNeighbor.getUid() > this.uid && msg.getId() < this.uid)) {
+					
+		        	DhtNode node = (DhtNode) getBestDiff(msg, this.leftNeighbor)[0];
+		        	
+		        	int resultId = -1;
+		        	
+		        	// On vérifie que dataInfos contient des informations
+		        	if(node.dataInfos != null && node.dataInfos.get(node) != null) {
+		        		// On parcourt les id compris dans les informations d'un noeud
+		        		for(int idTarget : node.dataInfos.get(node).keySet()) {
+			        		
+			        		// Si la donnée est trouvée on définit l'id cible
+			        		if(idTarget == msg.getId()) {
+			        			resultId = idTarget;
+					        	break;
+			        		}
+			        		
+			        	}
+		        	}
+		        	Message deliverGetDataMsg;
+		        	
+		        	// Si la donnée n'est pas trouvée
+		        	if(resultId == -1) {
+		        		deliverGetDataMsg = new Message(MessageType.DELIVER, "Could not find the data");
+		        	} else {
+		        		deliverGetDataMsg = new Message(MessageType.DELIVER, node.dataInfos.get(node).get(resultId).getContent());
+		        	}
+		        	
+		        	deliverGetDataMsg.setSavable(false);
+		        	deliverGetDataMsg.setId(msg.getFirstSender().getUid());
+		        	this.send(deliverGetDataMsg, getMyNode());
+					break;
+					
+				}
+				
+				
+				// On regarde si l'id de la donnée est égale à l'uid du noeud courant
+				if(msg.getId() == this.uid) {
+					
+		        	int resultId = -1;
+		        	
+		        	// On vérifie que dataInfos contient des informations
+		        	if(this.dataInfos != null && this.dataInfos.get(this) != null) {
+		        		// On parcourt les id compris dans les informations d'un noeud
+		        		for(int idTarget : this.dataInfos.get(this).keySet()) {
+			        		
+			        		// Si la donnée est trouvée on définit l'id cible
+			        		if(idTarget == msg.getId()) {
+			        			resultId = idTarget;
+					        	break;
+			        		}
+			        		
+			        	}
+		        	}
+		        	
+		        	Message deliverGetDataMsg;
+		        	
+		        	// Si la donnée n'est pas trouvée
+		        	if(resultId == -1) {
+		        		deliverGetDataMsg = new Message(MessageType.DELIVER, "Could not find the data");
+		        	} else {
+		        		deliverGetDataMsg = new Message(MessageType.DELIVER, this.dataInfos.get(this).get(resultId).getContent());
+		        	}
+		        	
+		        	deliverGetDataMsg.setSavable(false);
+		        	deliverGetDataMsg.setId(msg.getFirstSender().getUid());
+		        	this.send(deliverGetDataMsg, getMyNode());
 					
 				} else {
 					
@@ -502,6 +688,9 @@ public class DhtNode implements EDProtocol {
 			}
     }
     
+    /*
+     * Méthode permettant d'envoyer un message d'ajout de donnée vers un noeud ciblé
+     */
     private void addData(String prefixMsg, DhtNode deliverDataTo, int deliverToId, Message msg) {
     	
     	System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
