@@ -14,21 +14,21 @@ Cet anneau va servir à stocker des données sur les noeuds en fonction de leurs
 ├─ 📁 src
 │  └─ 📁 fr
 │     └─ 📁 usmb
-│        ├─ 📁 dht  # Fichiers composant la DHT
+│        ├─ 📁 dht  # Packages contenant les fichiers de la DHT
 │        │  ├─ 📝 Controller.java   # Crée et envoi les actions au simulateur
 │        │  ├─ 📝 DhtNode.java      # Gère les actions des nodes
 │        │  ├─ 📝 HWTransport.java  # Conditionne l'envoi des messages
 │        │  ├─ 📝 Initializer.java  # Initialise les nodes de l'anneau
-│        │  ├─ 📝 Message.java      # Objet Message
+│        │  ├─ 📝 Message.java      # Objet Message contenant ses informations
 │        │  └─ 📝 MessagType.java   # Classe Enumeration pour les types de messages
-│        └─ 📁 peersim   # Fichiers d'execution peersim
+│        └─ 📁 peersim   # Packages contenant les fichiers d'execution peersim
 │           └─ 📝 Simulator.java  # Fichier de simulation
 └─ 📝 config_file.cfg  # Fichier de configuration
 ```
 
 ## Technologies
 
-Pour simuler notre DHT, nous utilisons le simulateur *Peersim* qui est un simulateur paire à paire pouvant simuler un très large nombre de nodes.
+Pour simuler notre DHT, nous utilisons le simulateur *Peersim* qui est un simulateur peer to peer pouvant simuler un très large nombre de nodes.
 
 # Fonctionnalités développées
 
@@ -45,7 +45,7 @@ Pour simuler notre DHT, nous utilisons le simulateur *Peersim* qui est un simula
 
 ## Initialisation
 
-Afin de faire fonctionner notre DHT, il est nécessaire d'attribuer à chaque noeud un uid unique. Le premier noeud crée est le noeud initial de notre anneau, celui-ci est son propre voisin de gauche et son propre voisin de droite.
+Afin de faire fonctionner notre DHT, il est nécessaire d'attribuer à chaque noeud un id unique (uid). Le premier noeud crée est le noeud initial de notre anneau, celui-ci est son propre voisin de gauche et son propre voisin de droite.
 
 ## JOIN / LEAVE
 
@@ -54,11 +54,7 @@ Le noeud aléatoire vérifie les uid de ses voisins de gauche et de droite pour 
 
 Une fois l'emplacement pour le nouveau noeud trouvé, On envoi un message de type **PLACE_RIGHT** ou **PLACE_LEFT** avec le noeud à placé aux noeuds devenant les voisins de celui à placer, On envoi également un message de type **PLACE_BOTH** au noeud à placer pour qu'il change ses voisins.
 
-## SEND / DELIVER
-
-
-
-## PUT / GET
+## DELIVER
 
 
 
@@ -74,12 +70,12 @@ Une fois l'emplacement pour le nouveau noeud trouvé, On envoi un message de typ
 # Evolutions potentielles
 
 - Mise en place du routing lors d'un JOIN
-- Ajout d'un flag et une file d'attente sur chaque noeud pour gérer les acces concurrent
+- Modification de la file d'attente global en ajoutant un flag et une file d'attente sur chaque noeud pour gérer les acces concurrent
 
 # Compétences acquises
 
 - Compréhension du fonctionnement d'une DHT
-- Utilisation de PeerSim 
+- Utilisation de Simulateur (PeerSim)
 
 # Utilisation
 
@@ -94,8 +90,6 @@ Cloner le projet dans un repertoire :
 
 ## Lancement
 
-Ajouter les librairies *peersim-1.0.5.jar* *jep-2.3.0.jar* *djep-1.0.0.jar* *peersim-doclet.jar*
+Ajouter les librairies *peersim-1.0.5.jar*, *jep-2.3.0.jar*, *djep-1.0.0.jar* et *peersim-doclet.jar*
 
-Lancer la classe *Simulator* dans src/fr/usmb/peersim avec l'argument config_file.cfg
-
-
+Lancer la classe **Simulator.java** situé dans *src/fr/usmb/peersim* avec l'argument *config_file.cfg*
