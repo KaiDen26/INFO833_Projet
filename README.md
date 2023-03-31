@@ -64,12 +64,12 @@ Il est nécessaire de pouvoir faire circulé des informations dans notre DHT. Po
 
 A la réception d'un message de type **DELIVER**, on vérifie plusieurs condition: 
 
-- l'id du message est soit situé entre le le noeud actuel et son voisin de droite, soit en fin d'anneau (en terme d'uid, exemple: 900 -> 2), on délivre donc ce message au noeud actuel ou son voisin droit suivant l'uid le plus proche.
-- l'id du message est soit situé entre le le noeud actuel et son voisin de gauche, soit en fin d'anneau (en terme d'uid, exemple: 900 -> 2), on délivre donc ce message au noeud actuel ou son voisin gauche suivant l'uid le plus proche.
-- l'id du message est égal à l'uid noeud actuel, le message est donc délivré au noeud actuel
-- l'id du message est égal à l'uid d'un de ses voisins, le message est délivré sur le voisin correspondant
+- L'id du message est soit situé entre le le noeud actuel et son voisin de droite, soit en fin d'anneau (en terme d'uid, exemple: 900 -> 2), on délivre donc ce message au noeud actuel ou son voisin droit suivant l'uid le plus proche.
+- L'id du message est soit situé entre le le noeud actuel et son voisin de gauche, soit en fin d'anneau (en terme d'uid, exemple: 900 -> 2), on délivre donc ce message au noeud actuel ou son voisin gauche suivant l'uid le plus proche.
+- L'id du message est égal à l'uid noeud actuel, le message est donc délivré au noeud actuel
+- L'id du message est égal à l'uid d'un de ses voisins, le message est délivré sur le voisin correspondant
 
-Si aucune des ses conditions est rempli, on cherche le noeud parmis les voisins et les noeuds présent dans la table de routage du noeud actuel, le noeud avec l'uid le plus proche de celui du message. Le message est envoyé au noeud le plus proche trouvé.
+Si aucune des ces conditions sont remplies, nous cherchons le noeud parmis les voisins et les noeuds présent dans la table de routage du noeud actuel, le noeud avec l'uid le plus proche de celui du message. Le message est envoyé au noeud le plus proche trouvé.
 
 ## ADVANCED ROUTING
 
