@@ -20,7 +20,7 @@ Cet anneau va servir à stocker des données sur les noeuds en fonction de leurs
 │        │  ├─ 📝 HWTransport.java  # Conditionne l'envoi des messages
 │        │  ├─ 📝 Initializer.java  # Initialise les nodes de l'anneau
 │        │  ├─ 📝 Message.java      # Objet Message
-│        │  └─ 📝 MessagType.java   # Classe Enumeration pour les type de messages
+│        │  └─ 📝 MessagType.java   # Classe Enumeration pour les types de messages
 │        └─ 📁 peersim   # Fichiers d'execution peersim
 │           └─ 📝 Simulator.java  # Fichier de simulation
 └─ 📝 config_file.cfg  # Fichier de configuration
@@ -39,9 +39,11 @@ Pour simuler notre DHT, nous utilisons le simulateur *Peersim* qui est un simula
 - Réplication des données avec un degré de 3
 - Création et utilisation de tables de routage
 - Maintient du routage en cas de départ ou arrivée de noeuds
-- Maintient de la réplication des données en cas de départ ou arrivée
+- Maintient de la réplication des données en cas de départ ou arrivée de noeuds
 
 # Explications techniques
+
+## 
 
 # Difficultés
 
