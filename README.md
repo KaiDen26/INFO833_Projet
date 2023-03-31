@@ -88,6 +88,7 @@ Cette table de routage est une HashMap composée de l'objet DhtNode associé à 
 - Mise en place du routage lors d'un JOIN
 - Modification de la file d'attente globale en ajoutant un flag et une file d'attente sur chaque noeud pour gérer les accès concurrents
 
+
 # Compétences acquises
 
 - Compréhension du fonctionnement d'une DHT
@@ -98,6 +99,10 @@ Cette table de routage est une HashMap composée de l'objet DhtNode associé à 
 Dans l'image suivante, nous observons les logs des actions appliquées à la DHT
 
 ![Logger](logger.png)
+
+Dans l'image suivante, nous observons l'anneau comprenant les noeuds de la DHT ainsi que les jointures entre noeuds
+
+![Ring](ring.png)
 
 # Utilisation
 
