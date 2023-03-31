@@ -51,47 +51,53 @@ Afin de faire fonctionner notre DHT, il est nécessaire d'attribuer à chaque no
 
 ## JOIN / LEAVE
 
-Lorsqu'un noeud rejoint la DHT, il doit être placé à la position correspondant à son uid. Ce noeud demande à un noeud aléatoire de la DHT à le placer, cette demande est effectué gràce un l'envoi d'un message de type **JOIN** au noeud choisi.
+Lorsqu'un noeud rejoint la DHT, il doit être placé à la position correspondant à son uid. Ce noeud demande à un noeud aléatoire de la DHT de le placer, cette demande est effectué gràce à l'envoi d'un message de type **JOIN** au noeud choisi.
 Le noeud aléatoire vérifie les uid de ses voisins de gauche et de droite pour savoir si le noeud doit être placé entre l'un des deux. Si le noeud à placer n'est pas situé entre le noeud actuel et l'un des ses voisins, le message est envoyé au voisin avec l'uid le plus proche de l'uid du noeud à placer.
 
-Une fois l'emplacement pour le nouveau noeud trouvé, On envoi un message de type **PLACE_RIGHT** ou **PLACE_LEFT** avec le noeud à placé en contenue du message aux noeuds devenant les voisins de celui à placer, On envoi également un message de type **PLACE_BOTH** au noeud à placer pour qu'il change ses voisins.
+Une fois l'emplacement pour le nouveau noeud trouvé, on envoie un message de type **PLACE_RIGHT** ou **PLACE_LEFT** avec le noeud à placer en contenu du message aux noeuds devenant les voisins de celui à placer. On envoie également un message de type **PLACE_BOTH** au noeud à placer pour qu'il change ses voisins.
 
-Lorsqu'un noeud quitte la DHT, il envoi un message **PLACE_LEFT** a son voisin de gauche avec son voisin droite en contenu du message et inversement, il envoi un message **PLACE_RIGHT** a son voisin droit avec son voisin gauche en contenu de message.
+Lorsqu'un noeud quitte la DHT, il envoie un message **PLACE_LEFT** à son voisin de gauche avec son voisin droite en contenu du message et inversement, il envoie un message **PLACE_RIGHT** à son voisin droit avec son voisin gauche en contenu de message.
 
-Des messages sont ensuites envoyés à d'autres noeuds afin de supprimer les liens de routage et les données associées à ce noeud.
+Des messages sont ensuite envoyés à d'autres noeuds afin de supprimer les liens de routage ainsi que les données associées à ce noeud.
 
 ## DELIVER
 
-Il est nécessaire de pouvoir faire circulé des informations dans notre DHT. Pour cela, nous utilisons un message de type **DELIVER** qui permet d'envoyer des messages à un autre noeud de l'anneau. Le message envoyé peut contenir n'importe quelle donnée, cette donnée est soit sauvegardable, soit unique (ping).
+Il est nécessaire de pouvoir faire circuler des informations dans notre DHT. Pour cela, nous utilisons un message de type **DELIVER** qui permet d'envoyer des messages à un autre noeud de l'anneau. Le message envoyé peut contenir n'importe quelle donnée, cette donnée est soit sauvegardable, soit unique (ping).
 
-A la réception d'un message de type **DELIVER**, on vérifie plusieurs condition: 
+A la réception d'un message de type **DELIVER**, on vérifie plusieurs conditions: 
 
-- L'id du message est soit situé entre le le noeud actuel et son voisin de droite, soit en fin d'anneau (en terme d'uid, exemple: 900 -> 2), on délivre donc ce message au noeud actuel ou son voisin droit suivant l'uid le plus proche.
-- L'id du message est soit situé entre le le noeud actuel et son voisin de gauche, soit en fin d'anneau (en terme d'uid, exemple: 900 -> 2), on délivre donc ce message au noeud actuel ou son voisin gauche suivant l'uid le plus proche.
-- L'id du message est égal à l'uid noeud actuel, le message est donc délivré au noeud actuel
-- L'id du message est égal à l'uid d'un de ses voisins, le message est délivré sur le voisin correspondant
+- L'id du message est soit situé entre le noeud actuel et son voisin de droite, soit en fin d'anneau (en terme d'uid, exemple: 900 -> 2), on délivre donc ce message au noeud actuel ou son voisin droit suivant l'uid le plus proche.
+- L'id du message est soit situé entre le noeud actuel et son voisin de gauche, soit en fin d'anneau (en terme d'uid, exemple: 900 <- 2), on délivre donc ce message au noeud actuel ou son voisin gauche suivant l'uid le plus proche.
+- L'id du message est égal à l'uid du noeud actuel, le message est donc délivré au noeud courant.
+- L'id du message est égal à l'uid d'un de ses voisins, le message est délivré sur le voisin correspondant.
 
-Si aucune des ces conditions sont remplies, nous cherchons le noeud parmis les voisins et les noeuds présent dans la table de routage du noeud actuel, le noeud avec l'uid le plus proche de celui du message. Le message est envoyé au noeud le plus proche trouvé.
+Si aucune de ces conditions n'est remplie, nous cherchons le noeud parmi les voisins et les noeuds présents dans la table de routage du noeud courant, c'est à dire le noeud avec l'uid le plus proche de celui du message. Le message est envoyé au noeud le plus proche trouvé.
 
 ## ADVANCED ROUTING
 
-Le routage de proche en proche n'est pas performant, il est donc nécessaire d'implémenter une table de routage pour chaque noeud. Lors de l'envoi de messages, si le nombre de noeuds composant le chemin de transfert d'un message est supérieur ou égal à *Nombre de nodes / 3* arrondi à la valeur supérieure, un lien long est crée entre le noeud d'envoi initial et le noeud ayant reçu le message final. 
+Le routage de proche en proche n'est pas performant, il est donc nécessaire d'implémenter une table de routage pour chaque noeud. Lors de l'envoi de messages, si le nombre de noeuds composant le chemin de transfert d'un message est supérieur ou égal à *Nombre de nodes / 3* arrondi à la valeur supérieure, un lien long est créé entre le noeud d'envoi initial et le noeud ayant reçu le message final. 
 
-Cette table de routage est une HashMap composée de l'objet DhtNode associé à son id, ainsi les deux noeuds connaisse l'uid de l'un et de l'autre permettant un envoi direct des messages.
+Cette table de routage est une HashMap composée de l'objet DhtNode associé à son id, ainsi les deux noeuds connaissent l'uid de l'un et de l'autre permettant un envoi direct des messages.
 
 # Difficultés
 
- - Acces concurrent sur le meme noeud
+ - Accès concurrent sur le même noeud
 
 # Evolutions potentielles
 
-- Mise en place du routing lors d'un JOIN
-- Modification de la file d'attente global en ajoutant un flag et une file d'attente sur chaque noeud pour gérer les acces concurrent
+- Mise en place du routage lors d'un JOIN
+- Modification de la file d'attente globale en ajoutant un flag et une file d'attente sur chaque noeud pour gérer les accès concurrents
 
 # Compétences acquises
 
 - Compréhension du fonctionnement d'une DHT
 - Utilisation de Simulateur (PeerSim)
+
+# Exemple d'une execution
+
+Dans l'image suivante, nous observons les logs des actions appliqué à la DHT
+
+![Logger](logger.png)
 
 # Utilisation
 
@@ -100,7 +106,7 @@ Prérequis :
 
 ## Installation
 
-Cloner le projet dans un repertoire :
+Cloner le projet dans un répertoire :
 
 `git clone https://github.com/Kaiden26/INFO833_Projet`
 
@@ -108,4 +114,4 @@ Cloner le projet dans un repertoire :
 
 Ajouter les librairies *peersim-1.0.5.jar*, *jep-2.3.0.jar*, *djep-1.0.0.jar* et *peersim-doclet.jar*
 
-Lancer la classe **Simulator.java** situé dans *src/fr/usmb/peersim* avec l'argument *config_file.cfg*
+Lancer la classe **Simulator.java** située dans *src/fr/usmb/peersim* avec l'argument *config_file.cfg*
