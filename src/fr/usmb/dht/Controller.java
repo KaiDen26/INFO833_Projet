@@ -140,10 +140,10 @@ public class Controller implements peersim.core.Control{
 	 */
 	public int generateNewDataId() {
 		
-		int msgId = new Random().nextInt(Initializer.getNodeNb());
+		int msgId = new Random().nextInt(Initializer.getNodeNb() * 10);
 		
 		while (msgIds.contains(msgId)) {
-			msgId = new Random().nextInt(Initializer.getNodeNb());
+			msgId = new Random().nextInt(Initializer.getNodeNb() * 10);
 		}
 		
 		msgIds.add(msgId);

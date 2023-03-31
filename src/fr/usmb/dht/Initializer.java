@@ -66,7 +66,7 @@ public class Initializer implements peersim.core.Control {
 		node0.setTransportLayer(0);
 		
 		// On attribut une valeur aléatoire à l'uid de notre noeud dans un pool 10 fois supérieur au nombre de noeud
-		int node0Uid = new Random().nextInt(nodeNb);
+		int node0Uid = new Random().nextInt(nodeNb * 10);
 		node0.setNodeUid(node0Uid);
 		nodeUids.add(node0Uid); // On ajoute cette uid à la liste des uids
 		
@@ -74,9 +74,9 @@ public class Initializer implements peersim.core.Control {
 		for (int i = 1; i < nodeNb; i++) {
 			
 			//¨On fait en sorte que le uid soit unique
-			int nodeUid = new Random().nextInt(nodeNb);
+			int nodeUid = new Random().nextInt(nodeNb * 10);
 			while (nodeUids.contains(nodeUid)) {
-				nodeUid = new Random().nextInt(nodeNb);
+				nodeUid = new Random().nextInt(nodeNb * 10);
 			}
 			nodeUids.add(nodeUid);
 			DhtNode current = (DhtNode) Network.get(i).getProtocol(dhtPid);

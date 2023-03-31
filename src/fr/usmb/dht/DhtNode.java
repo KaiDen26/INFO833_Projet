@@ -288,9 +288,6 @@ public class DhtNode implements EDProtocol {
 					break;
 				} 
 				
-				DhtNode deliverDataTo = null;
-				int deliverToId = -1;
-				
 				// Les 2 blocs de conditions suivants sont réalisés lorsque le message est arrivé à sa destination
 				
 				
@@ -299,28 +296,9 @@ public class DhtNode implements EDProtocol {
 				// On regarde si l'uid du voisin de droite est strictement inférieur à l'uid du noeud courant ET que le l'id de la donnée est strictement supérieur à l'uid du noeud courant (Cette condition sert à savoir si le noeud courant est en fin d'anneau numériquement parlant)
 				if((msg.getId() > this.uid && msg.getId() < this.rightNeighbor.getUid()) || (this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid)) {
 					
-					int diff = Math.abs(msg.getId() - this.getUid());
-					int diff2 = Math.abs(msg.getId() - this.rightNeighbor.getUid());
+					Object[] values = getBestDiff(msg, this.rightNeighbor);
 					
-					
-					// On compare les différences de distance avec l'id de la donnée
-					// Cela permet de savoir quel noeud entre le noeud courant et le noeud de droite à l'uid le plus proche de l'id de la donnée
-					if(diff < diff2) {
-						deliverDataTo = this;
-						deliverToId = this.id;
-					}
-					else { 
-						deliverDataTo = this.rightNeighbor;
-						deliverToId = this.rightNeighbor.getId();
-					}
-					
-					System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
-					
-					Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-		    		addData.setTarget(deliverDataTo);
-					addData.setRemaining(3);
-		    		addData.setId(msg.getId());
-		        	this.send(addData, Network.get(deliverToId));
+		        	addData(prefixMsg, (DhtNode) values[0], (int) values[1], msg);
 		        	
 		        	checkCreateLink(msg);
 		        	
@@ -333,28 +311,9 @@ public class DhtNode implements EDProtocol {
 				// On regarde si l'uid du voisin de gauche est strictement supérieur à l'uid du noeud courant ET que le l'id de la donnée est strictement inférieur à l'uid du noeud courant (Cette condition sert à savoir si le noeud courant est en début d'anneau numériquement parlant)
 				if((msg.getId() < this.uid && msg.getId() > this.leftNeighbor.getUid()) || (this.leftNeighbor.getUid() > this.uid && msg.getId() < this.uid)) {
 					
-					int diff = Math.abs(msg.getId() - this.getUid());
-					int diff2 = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+					Object[] values = getBestDiff(msg, this.leftNeighbor);
 					
-					// On compare les différences de distance avec l'id de la donnée
-					// Cela permet de savoir quel noeud entre le noeud courant et le noeud de gauche à l'uid le plus proche de l'id de la donnée
-					if(diff < diff2) {
-						deliverDataTo = this;
-						deliverToId = this.id;
-					}
-					else { 
-						deliverDataTo = this.leftNeighbor;
-						deliverToId = this.leftNeighbor.getId();
-					}
-					
-					
-					System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
-					
-					Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-		    		addData.setTarget(deliverDataTo);
-					addData.setRemaining(3);
-		    		addData.setId(msg.getId());
-		        	this.send(addData, Network.get(deliverToId));
+		        	addData(prefixMsg, (DhtNode) values[0], (int) values[1], msg);
 		        	
 		        	checkCreateLink(msg);
 		        	
@@ -368,11 +327,7 @@ public class DhtNode implements EDProtocol {
 					
 					System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
 					
-					Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
-		    		addData.setTarget(this);
-					addData.setRemaining(3);
-		    		addData.setId(msg.getId());
-		        	this.send(addData, getMyNode());
+		        	addData(prefixMsg, this, this.id, msg);
 		        	
 		        	checkCreateLink(msg);
 					
@@ -380,6 +335,8 @@ public class DhtNode implements EDProtocol {
 					
 					// A partir d'ici on s'intéresse au relay du message avec tout le fonctionnement derrière
 					
+					DhtNode deliverDataTo = null;
+					int deliverToId = -1;
 					
 					// On initialise la variable différence comme infiny pour que forcément un résultat soit inférieur
 					double diff = Double.POSITIVE_INFINITY;
@@ -543,6 +500,43 @@ public class DhtNode implements EDProtocol {
 			default:
 				throw new IllegalArgumentException("Unexpected value");
 			}
+    }
+    
+    private void addData(String prefixMsg, DhtNode deliverDataTo, int deliverToId, Message msg) {
+    	
+    	System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
+		
+		Message addData = new Message(MessageType.ADD_DATA, "Update your data !", msg);
+		addData.setRemaining(3);
+		addData.setId(msg.getId());
+    	addData.setTarget(deliverDataTo);
+    	this.send(addData, Network.get(deliverToId));
+    		
+    	
+    }
+    
+    /*
+     * Méthode permettant de comparer les différences de distance avec l'id de la donnée
+     * Cela permet de savoir quel noeud entre le noeud courant et le noeuf en paramètre possède l'uid le plus proche de l'id de la donnée
+     */
+    private Object[] getBestDiff(Message msg, DhtNode node) {
+    	
+    	DhtNode deliverDataTo;
+    	int deliverToId = -1;
+    	
+    	int diff = Math.abs(msg.getId() - this.getUid());
+		int diff2 = Math.abs(msg.getId() - node.getUid());
+		
+		if(diff < diff2) {
+			deliverDataTo = this;
+			deliverToId = this.id;
+		}
+		else { 
+			deliverDataTo = node;
+			deliverToId = node.getId();
+		}
+		
+		return new Object[] {deliverDataTo, deliverToId};
     }
     
     /*
