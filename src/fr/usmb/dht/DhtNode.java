@@ -543,7 +543,6 @@ public class DhtNode implements EDProtocol {
 			default:
 				throw new IllegalArgumentException("Unexpected value");
 			}
-    	
     }
     
     /*
