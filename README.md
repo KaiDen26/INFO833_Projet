@@ -59,7 +59,7 @@ Prérequis :
 
 Cloner le projet dans un repertoire :
 
-`git clone https://github.com/Kaiden26/INFO833_Projet'
+`git clone https://github.com/Kaiden26/INFO833_Projet`
 
 ## Lancement :
 
