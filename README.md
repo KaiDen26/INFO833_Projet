@@ -47,12 +47,8 @@ Pour simuler notre DHT, nous utilisons le simulateur *Peersim* qui est un simula
 
 # Compétences acquises
 
-- Déploiement de bases de données NoSQL dans une application
-- Réplication d’une base de donnée pour sa résilience 
-- Utilisation de base de données secondaire pour stockage chaud (logs, gestion des connexions en temps réel)  
-- Gestion des sockets entre FrontEnd et BackEnd
-- Pipeline d’agrégats pour mongoDB
-
+- Compréhension du fonctionnement d'une DHT
+- Utilisation de PeerSim 
 
 # Utilisation
 
