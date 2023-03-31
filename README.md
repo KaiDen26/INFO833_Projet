@@ -95,7 +95,7 @@ Cette table de routage est une HashMap composée de l'objet DhtNode associé à 
 
 # Exemple d'une execution
 
-Dans l'image suivante, nous observons les logs des actions appliqué à la DHT
+Dans l'image suivante, nous observons les logs des actions appliqués à la DHT
 
 ![Logger](logger.png)
 
