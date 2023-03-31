@@ -9,7 +9,7 @@ Cet anneau va servir à stocker des données sur les noeuds en fonction de leurs
 
 ## Arborescence
 
-```
+```python
 📦 INFO833_Projet
 ├─ 📁 src
 │  └─ 📁 fr
