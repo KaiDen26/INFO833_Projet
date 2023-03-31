@@ -56,6 +56,8 @@ public class Controller implements peersim.core.Control{
 			
 		} 
 		
+		// Partie test
+		
 		Message ringMsg = new Message(MessageType.SHOW_TREE, "");
 		this.steps.add(() -> sendMsg((DhtNode) Network.get(0).getProtocol(this.dhtPid), ringMsg, Network.get(0)));
 		
