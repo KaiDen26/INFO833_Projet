@@ -98,12 +98,13 @@ Cette table de routage est une HashMap composée de l'objet DhtNode associé à 
 
 Dans l'image suivante, nous observons les logs des actions appliquées à la DHT
 
-![Logger](logger.png)
+![logs](https://user-images.githubusercontent.com/77977775/229211775-b4b6e3be-0b9a-441e-8788-242cdde781a6.png)
+
 
 Dans l'image suivante, nous observons l'anneau comprenant les noeuds de la DHT ainsi que les jointures entre noeuds (Utilisation de la librairie JavaFx)
 A noter que cet anneau ne correspond pas aux logs ci-dessus
 
-![ring](https://user-images.githubusercontent.com/77977775/229210524-4ee0f619-c31e-4174-a37f-9b975cfc26c3.png)
+![ring](https://user-images.githubusercontent.com/77977775/229211756-56fc68ed-69a7-44b1-b368-6d0b42a7c7f1.png)
 
 # Utilisation
 
