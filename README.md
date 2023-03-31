@@ -43,9 +43,38 @@ Pour simuler notre DHT, nous utilisons le simulateur *Peersim* qui est un simula
 
 # Explications techniques
 
-## 
+## Initialisation
+
+Afin de faire fonctionner notre DHT, il est nécessaire d'attribuer à chaque noeud un uid unique. Le premier noeud crée est le noeud initial de notre anneau, celui-ci est son propre voisin de gauche et son propre voisin de droite.
+
+## JOIN / LEAVE
+
+Lorsqu'un noeud rejoint la DHT, il doit être placé à la position correspondant à son uid. Ce noeud demande à un noeud aléatoire de la DHT à le placer, cette demande est effectué gràce un l'envoi d'un message de type **JOIN** au noeud choisi.
+Le noeud aléatoire vérifie les uid de ses voisins de gauche et de droite pour savoir si le noeud doit être placé entre l'un des deux. Si le noeud à placer n'est pas situé entre le noeud actuel et l'un des ses voisins, le message est envoyé au voisin avec l'uid le plus proche de l'uid du noeud à placer.
+
+Une fois l'emplacement pour le nouveau noeud trouvé, On envoi un message de type **PLACE_RIGHT** ou **PLACE_LEFT** avec le noeud à placé aux noeuds devenant les voisins de celui à placer, On envoi également un message de type **PLACE_BOTH** au noeud à placer pour qu'il change ses voisins.
+
+## SEND / DELIVER
+
+
+
+## PUT / GET
+
+
+
+## ADVANCED ROUTING
+
+
 
 # Difficultés
+
+ - Acces concurrent sur le meme noeud
+ - 
+
+# Evolutions potentielles
+
+- Mise en place du routing lors d'un JOIN
+- Ajout d'un flag et une file d'attente sur chaque noeud pour gérer les acces concurrent
 
 # Compétences acquises
 
