@@ -73,12 +73,11 @@ Si aucune des ces conditions sont remplies, nous cherchons le noeud parmis les v
 
 ## ADVANCED ROUTING
 
-
+Le routage de proche en proche n'est pas performant, il est donc nécessaire d'implémenter une table de routage pour chaque noeud. Lors de l'envoi de messages, si le nombre de noeuds composant le chemin de transfert d'un message est supérieur ou égal à *Nombre de nodes / 3* arrondi à la valeur supérieure, un lien est crée entre le noeud d'envoi initial et le noeud ayant reçu le message final. Cette table de routage est une HashMap composée de l'objet DhtNode associé à son id, ainsi les deux noeuds connaise l'uid de l'un et de l'autre permettant un envoi direct.
 
 # Difficultés
 
  - Acces concurrent sur le meme noeud
- - 
 
 # Evolutions potentielles
 
