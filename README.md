@@ -1,7 +1,9 @@
 # Projet INFO833 Construction d'une DHT
 GUERIOT Benjamin, NICOLAS Thomas
 
-Projet réalisé en groupe dans le cadre de nos études. Le but de ce projet est de concevoir et implémenter une DHT en dessus de PeerSim. C'est à dire créer un anneau composé de noeuds, chaque noeud ayant un identifiant unique.
+Projet réalisé en groupe dans le cadre de nos études à Polytech Annecy-Chambéry. 
+
+Le but de ce projet est de concevoir et implémenter une DHT en dessus de PeerSim. C'est à dire créer un anneau composé de noeuds, chaque noeud ayant un identifiant unique.
 
 Cet anneau va servir à stocker des données sur les noeuds en fonction de leurs indentifiants afin d'avoir une répartition équitable sur l'anneau.
 
