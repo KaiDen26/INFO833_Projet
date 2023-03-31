@@ -55,13 +55,13 @@ Pour simuler notre DHT, nous utilisons le simulateur *Peersim* qui est un simula
 Prérequis :
 - Java 5 minimum
 
-## Installation :
+## Installation
 
 Cloner le projet dans un repertoire :
 
 `git clone https://github.com/Kaiden26/INFO833_Projet`
 
-## Lancement :
+## Lancement
 
 Ajouter les librairies *peersim-1.0.5.jar* *jep-2.3.0.jar* *djep-1.0.0.jar* *peersim-doclet.jar*
 
