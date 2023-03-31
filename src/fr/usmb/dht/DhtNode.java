@@ -61,7 +61,7 @@ public class DhtNode implements EDProtocol {
      * Variable représentant la table de routage
      * Dictionnaire avec comme clé un noeud et comme valeur son numéro de noeud
      */
-    private HashMap<DhtNode, Integer> rootingTable = new HashMap<>();
+    private HashMap<DhtNode, Integer> routingTable = new HashMap<>();
 
     /*
      * Constructeur de la classe
@@ -150,9 +150,11 @@ public class DhtNode implements EDProtocol {
 					break;
 				}
 				
-				
+				// Ici on veut savoir si l'uid de la cible est strictement supérieure à l'uid du noeud actuel 
 				if(msg.getTarget().getUid() > this.uid) {
 					
+					// Ici on veut savoir si l'uid de la cible est strictement inférieure à l'uid du noeud de droite (donc le nouveau noeud doit se placer entre le noeud courant et celui de droite)
+					// Ou alors que l'uid du noeud courant est strictement supérieure à celui de droite ce qui veut dire qu'on est arrivé en fin d'anneau (numériquement parlant), donc le nouveau noeud possède l'uid la plus élevée
 					if(msg.getTarget().getUid() < this.rightNeighbor.getUid() || (this.uid > this.rightNeighbor.getUid())) {
 						
 						Message changeBothMsg = new Message(MessageType.PLACE_BOTH, "Change your neighbors !", new DhtNode[] {this, this.rightNeighbor});
@@ -167,6 +169,8 @@ public class DhtNode implements EDProtocol {
 						
 					} else {
 						
+						// Sinon on fait passer le message de type join au noeud de droite
+						
 						this.send(msg, Network.get(this.rightNeighbor.getId()));
 						
 						if(sender.equals(msg.getTarget())) {
@@ -176,8 +180,11 @@ public class DhtNode implements EDProtocol {
 						}
 					}
 					
+				// Sinon c'est que l'uid de la cible est inférieure ou égale à l'uid du noeud courant (en fait ça ne peut être que strictement inférieure comme on check la liste des uids avant)
 				} else {
 	
+					// Ici on veut savoir si l'uid de la cible est strictement supérieure à l'uid du noeud de gauche (donc le nouveau noeud doit se placer entre le noeud courant et celui de gauche)
+					// Ou alors que l'uid du noeud courant est strictement inférieure à celui de gauche ce qui veut dire qu'on est arrivé en fin d'anneau (numériquement parlant), donc le nouveau noeud possède l'uid la plus faible
 					if(msg.getTarget().getUid() > this.leftNeighbor.getUid()  || (this.uid < this.leftNeighbor.getUid())) {
 						
 						
@@ -192,6 +199,8 @@ public class DhtNode implements EDProtocol {
 						
 						
 					} else {
+						
+						// Sinon on fait passer le message de type join au noeud de gauche
 						
 						this.send(msg, Network.get(this.leftNeighbor.getId()));
 						
@@ -218,11 +227,12 @@ public class DhtNode implements EDProtocol {
 				
 				System.out.println("[" + msg.getType().getDescription() + "] from " + this.uid + " -> I leave the network");
 				
-				for(DhtNode node : this.rootingTable.keySet()) {
+				// On parcourt la table de routage du noeud courant pour ensuite envoyer un message aux noeuds ayant une jointure avec celui-ci
+				for(DhtNode node : this.routingTable.keySet()) {
 					
 					Message removeLink = new Message(MessageType.REMOVE_LINK, "Remove your link with me !", this);
 					this.send(removeLink, Network.get(node.getId()));
-					this.rootingTable.remove(node);
+					this.routingTable.remove(node);
 					
 				}
 				
@@ -230,10 +240,9 @@ public class DhtNode implements EDProtocol {
 				removeDataMsg.setRemaining(3);
 				this.send(removeDataMsg, getMyNode());
 				
-				Initializer.removeNodeUid(this.uid);
-				
 				break;
 			}
+			// Ici on s'intéresse aux messages de type place both, c'est à dire quand un noeud doit changer ses voisins de droite et de gauche
 			case PLACE_BOTH: {
 				
 				this.leftNeighbor = msg.getTargets()[0];
@@ -250,6 +259,7 @@ public class DhtNode implements EDProtocol {
 				
 				break;
 			}
+			// Ici on s'intéresse aux messages de type place left, lorsqu'un noeud doit changer son voisin de gauche
 			case PLACE_LEFT: {
 				
 				this.leftNeighbor = msg.getTarget();
@@ -258,6 +268,7 @@ public class DhtNode implements EDProtocol {
 				
 				break;
 			}
+			// Ici on s'intéresse aux messages de type place right, lorsqu'un noeud doit changer son voisin de droite
 			case PLACE_RIGHT: {
 				
 				this.rightNeighbor = msg.getTarget();
@@ -267,22 +278,34 @@ public class DhtNode implements EDProtocol {
 				
 				break;
 			}
+			// Ici on s'intéresse aux messages de type deliver, lorsqu'un noeud doit délivrer un message
 			case DELIVER: {
 				
+				// Sécurité lorsqu'un noeud n'est pas trouvé
+				// Ne devrait jamais être appelé mais nous gardons cela comme sécurité
 				if(msg.getSenders().size() > Initializer.getNodeNb()) {
 					System.out.println(prefixMsg + " Timed out");
 					break;
 				} 
 				
+				DhtNode deliverDataTo = null;
+				int deliverToId = -1;
+				
+				// Les 2 blocs de conditions suivants sont réalisés lorsque le message est arrivé à sa destination
+				
+				
+				// On regarde si l'id de la donnée est strictement supérieur à l'uid du noeud courant ET que l'id de la donnée est strictement inférieur à l'uid du noeud de droite -> Donc la donnée se stocke soit sur le noeud courant soit sur le noeud de droite
+				// OU ALORS
+				// On regarde si l'uid du voisin de droite est strictement inférieur à l'uid du noeud courant ET que le l'id de la donnée est strictement supérieur à l'uid du noeud courant (Cette condition sert à savoir si le noeud courant est en fin d'anneau numériquement parlant)
 				if((msg.getId() > this.uid && msg.getId() < this.rightNeighbor.getUid()) || (this.rightNeighbor.getUid() < this.uid && msg.getId() > this.uid)) {
 					
-					int dist = Math.abs(msg.getId() - this.getUid());
-					int dist2 = Math.abs(msg.getId() - this.rightNeighbor.getUid());
+					int diff = Math.abs(msg.getId() - this.getUid());
+					int diff2 = Math.abs(msg.getId() - this.rightNeighbor.getUid());
 					
-					DhtNode deliverDataTo = null;
-					int deliverToId;
 					
-					if(dist < dist2) {
+					// On compare les différences de distance avec l'id de la donnée
+					// Cela permet de savoir quel noeud entre le noeud courant et le noeud de droite à l'uid le plus proche de l'id de la donnée
+					if(diff < diff2) {
 						deliverDataTo = this;
 						deliverToId = this.id;
 					}
@@ -299,25 +322,23 @@ public class DhtNode implements EDProtocol {
 		    		addData.setId(msg.getId());
 		        	this.send(addData, Network.get(deliverToId));
 		        	
-		        	if(msg.getSenders().size() > 4) {
-		        		
-		        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", deliverDataTo);
-		        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
-		        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
-		        	}
+		        	checkCreateLink(msg);
 		        	
 					break;
 					
 				}
+				
+				// On regarde si l'id de la donnée est strictement inférieur à l'uid du noeud courant ET que l'id de la donnée est strictement supérieur à l'uid du noeud de gauche -> Donc la donnée se stocke soit sur le noeud courant soit sur le noeud de gauche
+				// OU ALORS
+				// On regarde si l'uid du voisin de gauche est strictement supérieur à l'uid du noeud courant ET que le l'id de la donnée est strictement inférieur à l'uid du noeud courant (Cette condition sert à savoir si le noeud courant est en début d'anneau numériquement parlant)
 				if((msg.getId() < this.uid && msg.getId() > this.leftNeighbor.getUid()) || (this.leftNeighbor.getUid() > this.uid && msg.getId() < this.uid)) {
 					
-					int dist = Math.abs(msg.getId() - this.getUid());
-					int dist2 = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+					int diff = Math.abs(msg.getId() - this.getUid());
+					int diff2 = Math.abs(msg.getId() - this.leftNeighbor.getUid());
 					
-					DhtNode deliverDataTo = null;
-					int deliverToId = 0;
-					
-					if(dist < dist2) {
+					// On compare les différences de distance avec l'id de la donnée
+					// Cela permet de savoir quel noeud entre le noeud courant et le noeud de gauche à l'uid le plus proche de l'id de la donnée
+					if(diff < diff2) {
 						deliverDataTo = this;
 						deliverToId = this.id;
 					}
@@ -335,17 +356,14 @@ public class DhtNode implements EDProtocol {
 		    		addData.setId(msg.getId());
 		        	this.send(addData, Network.get(deliverToId));
 		        	
-		        	if(msg.getSenders().size() > 4) {
-		        		
-		        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", deliverDataTo);
-		        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
-		        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
-		        	}
+		        	checkCreateLink(msg);
 		        	
 					break;
 					
 				}
 				
+				
+				// On regarde si l'id de la donnée est égale à l'uid du noeud courant
 				if(msg.getId() == this.uid) {
 					
 					System.out.println(prefixMsg + "Message's content : " + msg.getContent() + " {id = " + msg.getId() + "}");
@@ -356,84 +374,78 @@ public class DhtNode implements EDProtocol {
 		    		addData.setId(msg.getId());
 		        	this.send(addData, getMyNode());
 		        	
-		        	if(msg.getSenders().size() > 3) {
-		        		
-		        		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", this);
-		        		this.send(createLink, Network.get(msg.getFirstSender().getId()));
-		        		this.rootingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
-		        	}
+		        	checkCreateLink(msg);
 					
 				} else {
 					
-					DhtNode deliverTo = null;
-					int deliverToId = 0;
+					// A partir d'ici on s'intéresse au relay du message avec tout le fonctionnement derrière
 					
-					if(this.rightNeighbor.getUid() == msg.getId()) {
-						deliverTo = this.rightNeighbor;
-						deliverToId = this.rightNeighbor.getId();
-					}
-					else if(this.leftNeighbor.getUid() == msg.getId()) {
-						deliverTo = this.leftNeighbor;
-						deliverToId = this.leftNeighbor.getId();
-					}
-					else {
+					
+					// On initialise la variable différence comme infiny pour que forcément un résultat soit inférieur
+					double diff = Double.POSITIVE_INFINITY;
+					
+					
+					// Ici on parcourt notre table de routage
+					for(DhtNode node : this.routingTable.keySet()) {
 						
-						for(DhtNode node: this.rootingTable.keySet()) {
-							if(node.getUid() == msg.getId()) {
-								deliverTo = node;
-								deliverToId = this.rootingTable.get(node);
-								break;
-							}
-						}
+						// Si l'uid exacte correspondant à l'id de la donnée a été trouvé
+						if(node.getUid() == msg.getId()) {
+							deliverDataTo = node;
+							deliverToId = this.routingTable.get(node);
+							break;
 						
-						double diff = Double.POSITIVE_INFINITY;
-						
-						for(DhtNode node : this.rootingTable.keySet()) {
-							
+						// Sinon on continue de parcourir la table pour essayer de trouver la jointure avec la plus petite différence entre l'id de la donnée et l'uid du noeud
+						} else {
 							if(Math.abs(msg.getId() - node.getUid()) < diff) {
 								diff = Math.abs(msg.getId() - node.getUid());
-								deliverTo = node;
-								deliverToId = this.rootingTable.get(node);
+								deliverDataTo = node;
+								deliverToId = this.routingTable.get(node);
 							}
-							
 						}
-						
-						if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
-							deliverTo = this.leftNeighbor;
-							deliverToId = this.leftNeighbor.getId();
-							diff = Math.abs(msg.getId() - this.leftNeighbor.getUid());
-						}
-						if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
-							deliverTo = this.rightNeighbor;
-							deliverToId = this.rightNeighbor.getId();
-							diff = Math.abs(msg.getId() - this.rightNeighbor.getUid());
-						}
-						
 						
 					}
 					
+					// A la toute fin, nous vérifions si au final la différence l'id de la donnée et l'uid d'un noeud n'est pas plus faible pour les voisins
+
+					// Ici nous checkons pour le voisin de gauche
+					if(Math.abs(msg.getId() - this.leftNeighbor.getUid()) < diff) {
+						deliverDataTo = this.leftNeighbor;
+						deliverToId = this.leftNeighbor.getId();
+						diff = Math.abs(msg.getId() - this.leftNeighbor.getUid());
+					}
+					// Ici nous checkons pour le voisin de droite
+					if(Math.abs(msg.getId() - this.rightNeighbor.getUid()) < diff) {
+						deliverDataTo = this.rightNeighbor;
+						deliverToId = this.rightNeighbor.getId();
+						diff = Math.abs(msg.getId() - this.rightNeighbor.getUid());
+					}
+						
 					
+					// On relaye le message vers la cible trouvée
 					this.send(msg, Network.get(deliverToId));
-					System.out.println(prefixMsg + "Delivering message to " + deliverTo.getUid() + " {id = " + msg.getId() + "}");	
+					System.out.println(prefixMsg + "Delivering message to " + deliverDataTo.getUid() + " {id = " + msg.getId() + "}");	
 					
 				}
 				
 				break;
 			}
+			// Ici on s'intéresse aux messages de type place left, lorsqu'un noeud doit changer son voisin de gauche
 			case CREATE_LINK: {
 				
-				this.rootingTable.put(msg.getTarget(), msg.getTarget().getId());
+				this.routingTable.put(msg.getTarget(), msg.getTarget().getId());
 				System.out.println(prefixMsg + "Creating link between " + msg.getTarget().getUid() + " and " + this.uid);	
 				break;
 				
 			}
+			// Ici on s'intéresse aux messages de type remove link, lorsqu'un noeud doit supprimer une jointure de sa table de routage
 			case REMOVE_LINK: {
 				
-				this.rootingTable.remove(msg.getTarget());
+				this.routingTable.remove(msg.getTarget());
 				System.out.println(prefixMsg + "Removing link between " + msg.getTarget().getUid() + " and " + this.uid);	
 				break;
 				
 			}
+			// Ici on s'intéresse aux messages de type add data, lorsqu'un noeud sauvegarde des données
 			case ADD_DATA: {
 				
 				checkRemaining(msg);
@@ -452,6 +464,7 @@ public class DhtNode implements EDProtocol {
 				break;
 				
 			}
+			// Ici on s'intéresse aux messages de type collect data, lorsqu'un noeud demande des données
 			case COLLECT_DATA: {
 				
 				checkRemaining(msg);
@@ -469,6 +482,7 @@ public class DhtNode implements EDProtocol {
 				break;
 				
 			}
+			// Ici on s'intéresse aux messages de type remove data, lorsqu'un noeud supprime les données d'un autre noeud
 			case REMOVE_DATA: {
 				
 				checkRemaining(msg);
@@ -490,6 +504,7 @@ public class DhtNode implements EDProtocol {
 				break;
 				
 			}
+			// Ici on s'intéresse aux messages de type add all data, lorsqu'un noeud ajoute toute les données reçues
 			case ADD_ALL_DATA: {
 				
 				Map<Integer, Message> data = (Map<Integer, Message>) msg.getContent();
@@ -515,10 +530,12 @@ public class DhtNode implements EDProtocol {
 				break;
 				
 			}
+			// Ici on s'intéresse aux messages de type show tree, ce message affiche le résultat des méthodes d'affichage d'anneau
+			// Ce message nous permet de mieux visualiser l'anneau
 			case SHOW_TREE: {
 				
-				System.out.println(getTreeUid("Tree :\n", this, this));
-				System.out.println(getTreeNode("", this, this));
+				System.out.println(getRingUid("Ring :\n", this, this));
+				System.out.println(getRingNode("", this, this));
 				break;
 				
 			}
@@ -557,6 +574,21 @@ public class DhtNode implements EDProtocol {
     }
     
     /*
+     * Méthode permettant de check si la taille de la liste des relayeurs est strictement supérieure à la taille de la dht divisée par 3
+     * Si c'est le cas, alors on envoie un message de création de lien
+     */
+    private void checkCreateLink(Message msg) {
+    	
+    	if(msg.getSenders().size() > (Initializer.getNodeNb() / 3)) {
+    		
+    		Message createLink = new Message(MessageType.CREATE_LINK, "Create a link with me", this);
+    		this.send(createLink, Network.get(msg.getFirstSender().getId()));
+    		this.routingTable.put(msg.getFirstSender(), msg.getFirstSender().getId());
+    	}
+    	
+    }
+    
+    /*
      * Fonction permettant de check si le message doit être relayé encore une fois
      */
     private void checkRemaining(Message msg) {
@@ -583,15 +615,15 @@ public class DhtNode implements EDProtocol {
     }
     
     /*
-     * Retourne l'arbre des identifiants uniques des noeuds sous forme de chaîne de caractères
+     * Retourne l'anneau des identifiants uniques des noeuds sous forme de chaîne de caractères
      */
-    private String getTreeUid(String message, DhtNode startingNode, DhtNode currentNode) {
+    private String getRingUid(String message, DhtNode startingNode, DhtNode currentNode) {
     	
     	message += " " + currentNode.getUid() + " -> ";
     	
 		if(!currentNode.getRightNeighor().equals(startingNode)) {
 			
-			return getTreeUid(message, startingNode, currentNode.getRightNeighor());
+			return getRingUid(message, startingNode, currentNode.getRightNeighor());
 			
 		} 
 		
@@ -600,15 +632,15 @@ public class DhtNode implements EDProtocol {
     }
     
     /*
-     * Retourne l'arbre des numéros des noeuds sous forme de chaîne de caractères
+     * Retourne l'anneau des numéros des noeuds sous forme de chaîne de caractères
      */
-    private String getTreeNode(String message, DhtNode startingNode, DhtNode currentNode) {
+    private String getRingNode(String message, DhtNode startingNode, DhtNode currentNode) {
     	
     	message += " Node " + currentNode.getId() + " -> ";
     	
 		if(!currentNode.getRightNeighor().equals(startingNode)) {
 			
-			return getTreeNode(message, startingNode, currentNode.getRightNeighor());
+			return getRingNode(message, startingNode, currentNode.getRightNeighor());
 			
 		}
 		
