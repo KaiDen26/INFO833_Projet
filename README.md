@@ -101,8 +101,7 @@ Dans l'image suivante, nous observons les logs des actions appliquées à la DHT
 ![Logger](logger.png)
 
 Dans l'image suivante, nous observons l'anneau comprenant les noeuds de la DHT ainsi que les jointures entre noeuds
-
-![Ring](ring.png)
+![ring](https://user-images.githubusercontent.com/77977775/229210524-4ee0f619-c31e-4174-a37f-9b975cfc26c3.png)
 
 # Utilisation
 
